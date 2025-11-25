@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -21,6 +22,11 @@
   --color-chart-3: var(--chart-3);
   --color-chart-2: var(--chart-2);
   --color-chart-1: var(--chart-1);
+  --color-chart-6: var(--chart-6);
+  --color-chart-7: var(--chart-7);
+  --color-chart-8: var(--chart-8);
+  --color-chart-9: var(--chart-9);
+  --color-chart-10: var(--chart-10);
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
@@ -68,6 +74,11 @@
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
+  --chart-6: oklch(0.627 0.265 303.9);
+  --chart-7: oklch(0.58 0.22 280);
+  --chart-8: oklch(0.68 0.15 200);
+  --chart-9: oklch(0.72 0.18 45);
+  --chart-10: oklch(0.55 0.2 0);
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);
@@ -102,6 +113,11 @@
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
+  --chart-6: oklch(0.58 0.22 280);
+  --chart-7: oklch(0.68 0.15 200);
+  --chart-8: oklch(0.72 0.18 45);
+  --chart-9: oklch(0.55 0.2 0);
+  --chart-10: oklch(0.646 0.222 41.116);
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.488 0.243 264.376);
@@ -119,4 +135,14 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Nested list indentation for markdown rules */
+.prose ol {
+  margin-left: 1.5rem;
+}
+
+.prose ul + ol,
+.prose li > ol {
+  margin-left: 1.5rem;
 }

@@ -108,6 +108,28 @@ async function apiPost<T>(baseUrl: string, path: string, body: unknown): Promise
 }
 
 // =============================================================================
+// Helpers
+// =============================================================================
+
+function toCamelCase(obj: unknown): unknown {
+  if (Array.isArray(obj)) {
+    return obj.map((v) => toCamelCase(v));
+  } else if (obj !== null && typeof obj === "object" && obj.constructor === Object) {
+    return Object.keys(obj).reduce(
+      (result, key) => {
+        const camelKey = key.replace(/_([a-z])/g, (g) => g[1].toUpperCase());
+        (result as Record<string, unknown>)[camelKey] = toCamelCase(
+          (obj as Record<string, unknown>)[key]
+        );
+        return result;
+      },
+      {} as Record<string, unknown>
+    );
+  }
+  return obj;
+}
+
+// =============================================================================
 // Markets API
 // =============================================================================
 
@@ -128,7 +150,7 @@ async function apiPost<T>(baseUrl: string, path: string, body: unknown): Promise
  * ```
  */
 export async function getMarkets(baseUrl: string, params: MarketsQueryParams = {}): Promise<MarketsResponse> {
-  return apiGet<MarketsResponse>(baseUrl, "/markets", {
+  const response = await apiGet<MarketsResponse>(baseUrl, "/markets", {
     page: params.page ?? 1,
     limit: params.limit ?? DEFAULT_PAGE_SIZE,
     sort: params.sort ?? "volume",
@@ -139,6 +161,8 @@ export async function getMarkets(baseUrl: string, params: MarketsQueryParams = {
     topics: params.topics,
     keyword: params.keyword,
   });
+
+  return toCamelCase(response) as MarketsResponse;
 }
 
 /**
@@ -165,7 +189,8 @@ export async function getMarket(
 ): Promise<MarketResponse> {
   const path = `/markets/${slugOrId}`;
   const params = typeof slugOrId === "number" && networkId ? { networkId } : undefined;
-  return apiGet<MarketResponse>(baseUrl, path, params);
+  const response = await apiGet<MarketResponse>(baseUrl, path, params);
+  return toCamelCase(response) as MarketResponse;
 }
 
 /**
@@ -183,10 +208,11 @@ export async function getMarketEvents(
   networkId?: number
 ): Promise<MarketEventsResponse> {
   const path = `/markets/${slugOrId}/events`;
-  return apiGet<MarketEventsResponse>(baseUrl, path, {
+  const response = await apiGet<MarketEventsResponse>(baseUrl, path, {
     ...params,
     networkId: typeof slugOrId === "number" ? networkId : undefined,
   });
+  return toCamelCase(response) as MarketEventsResponse;
 }
 
 // =============================================================================
@@ -213,7 +239,7 @@ export async function getUserPortfolio(
   address: string,
   params: PortfolioQueryParams = {}
 ): Promise<PortfolioResponse> {
-  return apiGet<PortfolioResponse>(baseUrl, `/users/${address}/portfolio`, {
+  const response = await apiGet<PortfolioResponse>(baseUrl, `/users/${address}/portfolio`, {
     page: params.page ?? 1,
     limit: params.limit ?? DEFAULT_PAGE_SIZE,
     networkId: params.networkId,
@@ -221,6 +247,7 @@ export async function getUserPortfolio(
     marketSlug: params.marketSlug,
     tokenAddress: params.tokenAddress,
   });
+  return toCamelCase(response) as PortfolioResponse;
 }
 
 // =============================================================================

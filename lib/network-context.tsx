@@ -3,38 +3,26 @@
 /**
  * Network Context
  *
- * Provides a way to switch between testnet and mainnet throughout the app.
- * This context is separate from the wallet's connected chain - it controls
- * which API endpoints and contract addresses are used.
- *
- * The user can be connected to mainnet but viewing testnet markets, though
- * trading will require switching their wallet to the matching network.
+ * Provides network configuration throughout the app.
+ * Currently configured for Abstract mainnet only.
  */
 
-import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
-import { type NetworkKey, DEFAULT_NETWORK, NETWORKS, getApiBaseUrl, getContracts, getTokens } from "./config";
+import { createContext, useContext, type ReactNode } from "react";
+import { NETWORK, API_BASE_URL, CONTRACTS, TOKENS } from "./config";
 
 // =============================================================================
 // Context Types
 // =============================================================================
 
 interface NetworkContextValue {
-  /** Currently selected network (testnet or mainnet) */
-  network: NetworkKey;
-  /** Switch to a different network */
-  setNetwork: (network: NetworkKey) => void;
-  /** Toggle between testnet and mainnet */
-  toggleNetwork: () => void;
-  /** Network configuration for the current network */
-  networkConfig: (typeof NETWORKS)[NetworkKey];
-  /** API base URL for the current network */
+  /** Network configuration */
+  networkConfig: typeof NETWORK;
+  /** API base URL */
   apiBaseUrl: string;
-  /** Contract addresses for the current network */
-  contracts: ReturnType<typeof getContracts>;
-  /** Token configurations for the current network */
-  tokens: ReturnType<typeof getTokens>;
-  /** Whether currently on testnet */
-  isTestnet: boolean;
+  /** Contract addresses */
+  contracts: typeof CONTRACTS;
+  /** Token configurations */
+  tokens: typeof TOKENS;
 }
 
 // =============================================================================
@@ -49,44 +37,24 @@ const NetworkContext = createContext<NetworkContextValue | null>(null);
 
 interface NetworkProviderProps {
   children: ReactNode;
-  /** Initial network (defaults to DEFAULT_NETWORK from config) */
-  initialNetwork?: NetworkKey;
 }
 
 /**
- * Provider component for network selection.
+ * Provider component for network configuration.
  *
  * @example
  * ```tsx
- * <NetworkProvider initialNetwork="testnet">
+ * <NetworkProvider>
  *   <App />
  * </NetworkProvider>
  * ```
  */
-export function NetworkProvider({ children, initialNetwork = DEFAULT_NETWORK }: NetworkProviderProps) {
-  const [network, setNetworkState] = useState<NetworkKey>(initialNetwork);
-
-  const setNetwork = useCallback((newNetwork: NetworkKey) => {
-    setNetworkState(newNetwork);
-    // Persist selection to localStorage for returning users
-    if (typeof window !== "undefined") {
-      localStorage.setItem("myriad-network", newNetwork);
-    }
-  }, []);
-
-  const toggleNetwork = useCallback(() => {
-    setNetwork(network === "testnet" ? "mainnet" : "testnet");
-  }, [network, setNetwork]);
-
+export function NetworkProvider({ children }: NetworkProviderProps) {
   const value: NetworkContextValue = {
-    network,
-    setNetwork,
-    toggleNetwork,
-    networkConfig: NETWORKS[network],
-    apiBaseUrl: getApiBaseUrl(network),
-    contracts: getContracts(network),
-    tokens: getTokens(network),
-    isTestnet: network === "testnet",
+    networkConfig: NETWORK,
+    apiBaseUrl: API_BASE_URL,
+    contracts: CONTRACTS,
+    tokens: TOKENS,
   };
 
   return <NetworkContext.Provider value={value}>{children}</NetworkContext.Provider>;
@@ -102,12 +70,8 @@ export function NetworkProvider({ children, initialNetwork = DEFAULT_NETWORK }: 
  * @example
  * ```tsx
  * function MyComponent() {
- *   const { network, toggleNetwork, isTestnet } = useNetwork();
- *   return (
- *     <button onClick={toggleNetwork}>
- *       Current: {network} ({isTestnet ? "Test" : "Production"})
- *     </button>
- *   );
+ *   const { networkConfig, apiBaseUrl } = useNetwork();
+ *   return <div>Connected to {networkConfig.name}</div>;
  * }
  * ```
  */
@@ -118,4 +82,3 @@ export function useNetwork() {
   }
   return context;
 }
-

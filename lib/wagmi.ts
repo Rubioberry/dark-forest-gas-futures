@@ -13,7 +13,7 @@
  */
 
 import { createConfig } from "wagmi";
-import { abstractTestnet, abstract } from "wagmi/chains";
+import { abstract } from "wagmi/chains";
 import { createClient, http } from "viem";
 import { eip712WalletActions } from "viem/zksync";
 import { connectorsForWallets, type WalletList } from "@rainbow-me/rainbowkit";
@@ -31,9 +31,8 @@ import {
 
 /**
  * Chains supported by this application.
- * Abstract mainnet and testnet are the primary targets.
  */
-export const chains = [abstract, abstractTestnet] as const;
+export const chains = [abstract] as const;
 
 // =============================================================================
 // Wallet Connectors

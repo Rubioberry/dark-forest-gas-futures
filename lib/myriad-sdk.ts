@@ -11,8 +11,7 @@
  * Always import dynamically or use in client components.
  */
 
-import type { NetworkKey } from "./config";
-import { CONTRACTS, NETWORKS } from "./config";
+import { CONTRACTS, NETWORK } from "./config";
 
 // =============================================================================
 // Types
@@ -54,32 +53,29 @@ async function getPolkamarketsJs() {
  * - Execute trades
  *
  * @param provider - Web3 provider from wallet connection
- * @param network - Network to use (testnet or mainnet)
  * @returns Initialized SDK instance
  *
  * @example
  * ```ts
  * const provider = await connector.getProvider();
- * const sdk = await initializeSdk(provider, "mainnet");
+ * const sdk = await initializeSdk(provider);
  *
  * // Now use sdk.pm.buy(), sdk.pm.sell(), etc.
  * ```
  */
-export async function initializeSdk(provider: unknown, network: NetworkKey): Promise<MyriadSdk> {
+export async function initializeSdk(provider: unknown): Promise<MyriadSdk> {
   const polkamarketsjs = await getPolkamarketsJs();
-  const networkConfig = NETWORKS[network];
-  const contracts = CONTRACTS[network];
 
   // Initialize the polkamarkets application
   const app = new polkamarketsjs.Application({
     web3Provider: provider,
-    web3EventsProvider: networkConfig.rpcUrl,
+    web3EventsProvider: NETWORK.rpcUrl,
   });
 
   // Get the prediction market contract instance
   const pm = app.getPredictionMarketV3PlusContract({
-    contractAddress: contracts.predictionMarket,
-    querierContractAddress: contracts.predictionMarketQuerier,
+    contractAddress: CONTRACTS.predictionMarket,
+    querierContractAddress: CONTRACTS.predictionMarketQuerier,
   });
 
   return { app, pm };

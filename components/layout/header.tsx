@@ -6,49 +6,13 @@
  * Main navigation header with:
  * - Logo/brand
  * - Navigation links
- * - Network switcher (testnet/mainnet)
  * - Wallet connection button
  */
 
 import Link from "next/link";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { useNetwork } from "@/lib/network-context";
 import { cn } from "@/lib/utils";
-
-// =============================================================================
-// Network Switcher
-// =============================================================================
-
-/**
- * Toggle button for switching between testnet and mainnet.
- * Visual indicator shows which network is currently selected.
- */
-function NetworkSwitcher() {
-  const { network, toggleNetwork, isTestnet } = useNetwork();
-
-  return (
-    <button
-      onClick={toggleNetwork}
-      className={cn(
-        "relative flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
-        "border border-border hover:bg-accent",
-        isTestnet
-          ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30"
-          : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
-      )}
-      title={`Switch to ${isTestnet ? "mainnet" : "testnet"}`}
-    >
-      {/* Status dot */}
-      <span
-        className={cn(
-          "h-2 w-2 rounded-full",
-          isTestnet ? "bg-amber-500" : "bg-emerald-500"
-        )}
-      />
-      <span className="capitalize">{network}</span>
-    </button>
-  );
-}
+import { ModeToggle } from "@/components/mode-toggle";
 
 // =============================================================================
 // Navigation Links
@@ -98,9 +62,9 @@ export function Header() {
           <NavLinks />
         </div>
 
-        {/* Right side: Network + Wallet */}
+        {/* Right side: Wallet */}
         <div className="flex items-center gap-3">
-          <NetworkSwitcher />
+          <ModeToggle />
           <ConnectButton
             chainStatus="icon"
             showBalance={false}
@@ -114,4 +78,3 @@ export function Header() {
     </header>
   );
 }
-

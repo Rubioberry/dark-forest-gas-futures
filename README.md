@@ -9,7 +9,7 @@ A developer-friendly starter kit for building prediction market applications on 
 - **Trading** - Buy and sell outcome shares with real-time quotes
 - **Portfolio** - Track positions, P&L, and claim winnings
 - **Wallet Support** - Abstract Global Wallet (AGW) + standard wallets via RainbowKit
-- **Network Switching** - Toggle between testnet and mainnet
+- **Abstract Mainnet** - Production-ready on Abstract
 
 ## Tech Stack
 
@@ -83,11 +83,11 @@ Open [http://localhost:3000](http://localhost:3000) to see the app.
 
 ```
 lib/
-  config.ts           # Network configs, contract addresses
+  config.ts           # Network config, contract addresses
   wagmi.ts            # Wallet configuration
   myriad-api.ts       # REST API client
   myriad-sdk.ts       # polkamarkets-js wrapper
-  network-context.tsx # Network switching
+  network-context.tsx # Network configuration provider
   queries/            # TanStack Query options
   mutations/          # Trade/claim mutations
   types/              # TypeScript interfaces
@@ -133,10 +133,10 @@ All components follow a consistent pattern:
 
 ### `lib/config.ts`
 Central configuration file with:
-- Network settings (RPC URLs, chain IDs)
-- Contract addresses for both testnet and mainnet
+- Network settings (RPC URL, chain ID)
+- Contract addresses
 - Token addresses (USDC, PENGU, PTS)
-- API endpoints
+- API endpoint
 
 ### `lib/myriad-api.ts`
 Typed REST API client with functions for:
@@ -160,8 +160,7 @@ TanStack Query mutations for transactions:
 
 The starter kit uses the Myriad Protocol REST API v2:
 
-- **Base URL (Production)**: `https://api-v2.myriadprotocol.com`
-- **Base URL (Staging)**: `https://api-v2.staging.myriadprotocol.com`
+- **Base URL**: `https://api-v2.myriadprotocol.com`
 
 Key endpoints used:
 - `GET /markets` - List markets
@@ -191,13 +190,6 @@ Eligible trades: Markets with `distributor_fee > 0`
 |----------|---------|
 | PredictionMarket | `0x3e0F5F8F5Fb043aBFA475C0308417Bf72c463289` |
 | PredictionMarketQuerier | `0x1d5773Cd0dC74744C1F7a19afEeECfFE64f233Ff` |
-
-### Abstract Testnet
-
-| Contract | Address |
-|----------|---------|
-| PredictionMarket | `0x6c44Abf72085E5e71EeB7C951E3079073B1E7312` |
-| PredictionMarketQuerier | `0xa30c60107f9011dd49fc9e04ebe15963064eecc1` |
 
 ## Contributing
 

@@ -142,7 +142,7 @@ function EmptyPortfolio() {
 export default function PortfolioPage() {
   const { status, address } = useAccount();
   const isConnected = status === "connected";
-  const { apiBaseUrl, networkConfig, isTestnet } = useNetwork();
+  const { apiBaseUrl, networkConfig } = useNetwork();
 
   // Fetch portfolio data
   const { data, isPending, error } = useQuery({
@@ -175,9 +175,6 @@ export default function PortfolioPage() {
         <p className="mt-2 text-muted-foreground">
           Your positions on{" "}
           <span className="font-medium text-foreground">{networkConfig.name}</span>
-          {isTestnet && (
-            <span className="ml-2 text-amber-600 dark:text-amber-400">(Testnet)</span>
-          )}
         </p>
       </div>
 

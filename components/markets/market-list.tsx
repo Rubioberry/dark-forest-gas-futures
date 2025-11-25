@@ -9,8 +9,8 @@
 
 import { MarketCard } from "./market-card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Loader2 } from "lucide-react";
 import type { MarketSummary, Pagination } from "@/lib/types";
 
 // =============================================================================
@@ -95,6 +95,7 @@ interface MarketListProps {
   isLoading?: boolean;
   onLoadMore?: () => void;
   isLoadingMore?: boolean;
+  loadMoreRef?: React.RefObject<HTMLDivElement | null>;
 }
 
 export function MarketList({
@@ -103,6 +104,7 @@ export function MarketList({
   isLoading,
   onLoadMore,
   isLoadingMore,
+  loadMoreRef,
 }: MarketListProps) {
   if (isLoading) {
     return <MarketListSkeleton />;
@@ -122,11 +124,13 @@ export function MarketList({
       </div>
 
       {/* Load More */}
-      {pagination && pagination.hasNext && onLoadMore && (
-        <div className="flex justify-center pt-4">
-          <Button variant="outline" onClick={onLoadMore} disabled={isLoadingMore}>
-            {isLoadingMore ? "Loading..." : "Load More"}
-          </Button>
+      {pagination && pagination.hasNext && (
+        <div ref={loadMoreRef} className="flex justify-center pt-8 pb-4 min-h-[60px]">
+          {isLoadingMore ? (
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          ) : (
+            <div className="h-4 w-full" />
+          )}
         </div>
       )}
 

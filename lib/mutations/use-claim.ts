@@ -66,7 +66,7 @@ interface ClaimResult {
 export function useClaim() {
   const { address } = useAccount();
   const { data: connectorClient } = useConnectorClient();
-  const { network, apiBaseUrl } = useNetwork();
+  const { apiBaseUrl } = useNetwork();
   const queryClient = useQueryClient();
 
   const [status, setStatus] = useState<TransactionStatus>("idle");
@@ -77,7 +77,7 @@ export function useClaim() {
       if (!connectorClient) throw new Error("No wallet client available");
 
       const provider = await connectorClient.transport;
-      const sdk = await initializeSdk(provider, network);
+      const sdk = await initializeSdk(provider);
 
       setStatus("pending_signature");
 

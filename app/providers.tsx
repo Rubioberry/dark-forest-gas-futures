@@ -7,7 +7,7 @@
  * - WagmiProvider: Wallet connection and blockchain interactions
  * - QueryClientProvider: TanStack Query for data fetching
  * - RainbowKitProvider: Wallet connection UI
- * - NetworkProvider: Testnet/mainnet switching
+ * - NetworkProvider: Network configuration
  *
  * The provider order matters - outer providers are available to inner ones.
  */

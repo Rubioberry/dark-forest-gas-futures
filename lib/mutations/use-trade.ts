@@ -95,7 +95,7 @@ interface TradeResult {
 export function useTrade() {
   const { address } = useAccount();
   const { data: connectorClient } = useConnectorClient();
-  const { network, contracts, apiBaseUrl } = useNetwork();
+  const { contracts, apiBaseUrl } = useNetwork();
   const queryClient = useQueryClient();
 
   // Track detailed transaction status
@@ -110,7 +110,7 @@ export function useTrade() {
       const provider = await connectorClient.transport;
 
       // Initialize SDK
-      const sdk = await initializeSdk(provider, network);
+      const sdk = await initializeSdk(provider);
 
       // Get ERC20 contract for approval checks
       const erc20 = getErc20Contract(sdk.app, params.tokenAddress);

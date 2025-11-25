@@ -10,34 +10,36 @@
  * - Paginated grid of market cards
  */
 
-import { useState, useCallback } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useCallback, useRef, useEffect } from "react";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { useNetwork } from "@/lib/network-context";
-import { marketsQueryOptions } from "@/lib/queries";
+import { marketsInfiniteQueryOptions } from "@/lib/queries";
 import { MarketFilters, type MarketFiltersValue } from "@/components/markets/market-filters";
 import { MarketList } from "@/components/markets/market-list";
-import type { MarketSummary } from "@/lib/types";
 
 // =============================================================================
 // Page Component
 // =============================================================================
 
 export default function MarketsPage() {
-  const { apiBaseUrl, networkConfig, isTestnet } = useNetwork();
+  const { apiBaseUrl, networkConfig } = useNetwork();
 
   // Filter state
   const [filters, setFilters] = useState<MarketFiltersValue>({
     sort: "volume_24h",
+    state: "open",
   });
 
-  // Pagination state
-  const [page, setPage] = useState(1);
-  const [allMarkets, setAllMarkets] = useState<MarketSummary[]>([]);
-
-  // Fetch markets with current filters
-  const { data, isPending, isFetching } = useQuery({
-    ...marketsQueryOptions(apiBaseUrl, {
-      page,
+  // Infinite Query
+  const {
+    data,
+    isPending,
+    isFetching,
+    isFetchingNextPage,
+    fetchNextPage,
+    hasNextPage,
+  } = useInfiniteQuery({
+    ...marketsInfiniteQueryOptions(apiBaseUrl, {
       limit: 12,
       networkId: networkConfig.id,
       keyword: filters.keyword,
@@ -45,31 +47,42 @@ export default function MarketsPage() {
       sort: filters.sort,
       order: "desc",
     }),
-    // Reset markets when filters change
-    placeholderData: (previousData) => previousData,
   });
 
-  // Handle filter changes - reset pagination
+  // Intersection Observer for Infinite Scroll
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    const currentRef = loadMoreRef.current;
+    if (currentRef) {
+      observer.observe(currentRef);
+    }
+
+    return () => {
+      if (currentRef) {
+        observer.unobserve(currentRef);
+      }
+    };
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  // Handle filter changes
   const handleFiltersChange = useCallback((newFilters: MarketFiltersValue) => {
     setFilters(newFilters);
-    setPage(1);
-    setAllMarkets([]);
+    // React Query handles resetting automatically when query keys change (which happens when filters change)
   }, []);
 
-  // Handle load more
-  const handleLoadMore = useCallback(() => {
-    if (data?.pagination.hasNext) {
-      setPage((p) => p + 1);
-    }
-  }, [data?.pagination.hasNext]);
-
   // Combine paginated results
-  const markets = page === 1 ? (data?.data ?? []) : [...allMarkets, ...(data?.data ?? [])];
-
-  // Update allMarkets when new data arrives
-  if (data?.data && page > 1 && !allMarkets.includes(data.data[0])) {
-    setAllMarkets((prev) => [...prev, ...data.data]);
-  }
+  const markets = data?.pages.flatMap((page) => page.data) ?? [];
+  const lastPage = data?.pages[data.pages.length - 1];
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -79,9 +92,6 @@ export default function MarketsPage() {
         <p className="mt-2 text-muted-foreground">
           Trade on the outcomes of real-world events on{" "}
           <span className="font-medium text-foreground">{networkConfig.name}</span>
-          {isTestnet && (
-            <span className="ml-2 text-amber-600 dark:text-amber-400">(Testnet)</span>
-          )}
         </p>
       </div>
 
@@ -93,10 +103,11 @@ export default function MarketsPage() {
       {/* Market List */}
       <MarketList
         markets={markets}
-        pagination={data?.pagination}
-        isLoading={isPending && page === 1}
-        onLoadMore={handleLoadMore}
-        isLoadingMore={isFetching && page > 1}
+        pagination={lastPage?.pagination}
+        isLoading={isPending}
+        onLoadMore={() => fetchNextPage()}
+        isLoadingMore={isFetchingNextPage}
+        loadMoreRef={loadMoreRef}
       />
     </div>
   );

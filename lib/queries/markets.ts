@@ -10,7 +10,7 @@
  * ```
  */
 
-import { queryOptions } from "@tanstack/react-query";
+import { queryOptions, infiniteQueryOptions } from "@tanstack/react-query";
 import { getMarkets, getMarket, getMarketEvents } from "@/lib/myriad-api";
 import type { MarketsQueryParams, MarketEventsQueryParams } from "@/lib/types";
 
@@ -36,7 +36,7 @@ export const marketKeys = {
     [...marketKeys.details(), baseUrl, slugOrId, networkId] as const,
   /** Key for market events */
   events: (baseUrl: string, slugOrId: string | number, networkId?: number) =>
-    [...marketKeys.all, "events", baseUrl, slugOrId, networkId] as const,
+    [...marketKeys.details(), baseUrl, slugOrId, networkId, "events"] as const,
 };
 
 // =============================================================================
@@ -66,6 +66,29 @@ export function marketsQueryOptions(baseUrl: string, params: MarketsQueryParams 
   return queryOptions({
     queryKey: marketKeys.list(baseUrl, params),
     queryFn: () => getMarkets(baseUrl, params),
+    // Markets data is relatively stable, cache for 30 seconds
+    staleTime: 30 * 1000,
+    // Don't refetch when component remounts if data is fresh
+    refetchOnMount: false,
+    // Enabled only when we have a base URL
+    enabled: Boolean(baseUrl),
+  });
+}
+
+/**
+ * Query options for fetching an infinite list of markets.
+ *
+ * @param baseUrl - API base URL
+ * @param params - Filter parameters
+ */
+export function marketsInfiniteQueryOptions(baseUrl: string, params: MarketsQueryParams = {}) {
+  return infiniteQueryOptions({
+    queryKey: marketKeys.list(baseUrl, { ...params, page: undefined }), // Exclude page from key for infinite query base
+    queryFn: ({ pageParam }) => getMarkets(baseUrl, { ...params, page: pageParam as number }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      return lastPage.pagination.hasNext ? lastPage.pagination.page + 1 : undefined;
+    },
     // Markets data is relatively stable, cache for 30 seconds
     staleTime: 30 * 1000,
     // Don't refetch when component remounts if data is fresh
@@ -120,11 +143,9 @@ export function marketEventsQueryOptions(
   networkId?: number
 ) {
   return queryOptions({
-    queryKey: marketKeys.events(baseUrl, slugOrId, networkId),
-    queryFn: () => getMarketEvents(baseUrl, slugOrId, params, networkId),
-    // Events update frequently, shorter cache
-    staleTime: 15 * 1000,
+    queryKey: [...marketKeys.events(baseUrl, slugOrId, networkId), params],
+    queryFn: () => getMarketEvents(baseUrl, slugOrId, networkId, params),
+    staleTime: 10 * 1000, // Events update frequently
     enabled: Boolean(baseUrl && slugOrId),
   });
 }
-

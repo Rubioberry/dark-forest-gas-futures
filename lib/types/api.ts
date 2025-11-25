@@ -74,10 +74,9 @@ export interface MarketsResponse extends PaginatedResponse<MarketSummary> {}
 /**
  * Response from GET /markets/:id endpoint.
  * Returns full market details with price charts.
+ * Note: The API returns the market directly without a data wrapper.
  */
-export interface MarketResponse {
-  data: Market;
-}
+export type MarketResponse = Market;
 
 // =============================================================================
 // Market Events API

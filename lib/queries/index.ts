@@ -6,7 +6,13 @@
  */
 
 // Markets
-export { marketKeys, marketsQueryOptions, marketQueryOptions, marketEventsQueryOptions } from "./markets";
+export { 
+  marketKeys, 
+  marketsQueryOptions, 
+  marketsInfiniteQueryOptions,
+  marketQueryOptions, 
+  marketEventsQueryOptions 
+} from "./markets";
 
 // Portfolio
 export { portfolioKeys, portfolioQueryOptions } from "./portfolio";

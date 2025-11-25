@@ -39,21 +39,36 @@ export interface Outcome {
 }
 
 /**
- * Price chart data for an outcome across different timeframes.
- * Each timeframe contains an array of [timestamp, price] data points.
+ * A single price data point from the API.
  */
-export interface OutcomePriceCharts {
-  /** Last 24 hours - 5 minute buckets (max 288 points) */
-  "24h"?: PricePoint[];
-  /** Last 7 days - 30 minute buckets (max 336 points) */
-  "7d"?: PricePoint[];
-  /** Last 30 days - 4 hour buckets (max 180 points) */
-  "30d"?: PricePoint[];
-  /** All time - 4 hour buckets */
-  all?: PricePoint[];
+export interface PriceDataPoint {
+  /** Price value between 0 and 1 */
+  value: number;
+  /** Unix timestamp in seconds */
+  timestamp: number;
+  /** ISO date string */
+  date: string;
 }
 
-/** A single price data point: [timestamp in seconds, price 0-1] */
+/**
+ * Price chart data for a specific timeframe.
+ */
+export interface PriceChartTimeframe {
+  /** Timeframe identifier */
+  timeframe: "24h" | "7d" | "30d" | "all";
+  /** Array of price data points */
+  prices: PriceDataPoint[];
+  /** Percentage change over this timeframe */
+  changePercent: number;
+}
+
+/**
+ * Price charts array returned by the API.
+ * Each outcome has an array of timeframe objects.
+ */
+export type OutcomePriceCharts = PriceChartTimeframe[];
+
+/** Legacy tuple format for backwards compatibility: [timestamp, price] */
 export type PricePoint = [number, number];
 
 /**

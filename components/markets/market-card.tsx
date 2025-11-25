@@ -4,36 +4,30 @@
  * Market Card Component
  *
  * Displays a market preview with:
- * - Title and image
- * - Outcome probabilities
- * - Volume and liquidity stats
- * - Time until expiration
+ * - Full-width cover image
+ * - Probability Bar (for binary markets)
+ * - Outcome Buttons (Yes/No)
+ * - Volume and liquidity stats in footer
  */
 
 import Link from "next/link";
 import Image from "next/image";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { BarChart3, Clock, DollarSign, Users } from "lucide-react";
 import type { MarketSummary } from "@/lib/types";
 
 // =============================================================================
 // Helper Functions
 // =============================================================================
 
-/**
- * Format a number with K/M/B suffixes for compact display.
- */
 function formatCompact(value: number): string {
-  if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(1)}B`;
-  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
-  if (value >= 1_000) return `${(value / 1_000).toFixed(1)}K`;
-  return value.toFixed(0);
+  if (value >= 1_000_000_000) return `$${(value / 1_000_000_000).toFixed(1)}B`;
+  if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`;
+  if (value >= 1_000) return `$${(value / 1_000).toFixed(1)}K`;
+  return `$${value.toFixed(0)}`;
 }
 
-/**
- * Format time remaining until expiration.
- */
 function formatTimeRemaining(expiresAt: string): string {
   const now = new Date();
   const expiry = new Date(expiresAt);
@@ -44,52 +38,109 @@ function formatTimeRemaining(expiresAt: string): string {
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
   const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
 
-  if (days > 30) return `${Math.floor(days / 30)}mo`;
-  if (days > 0) return `${days}d ${hours}h`;
+  if (days > 30) {
+    return expiry.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  }
+  if (days > 0) return `${days}d`;
   if (hours > 0) return `${hours}h`;
   return "< 1h";
 }
 
-/**
- * Format price as percentage.
- */
 function formatPercent(price: number): string {
   return `${(price * 100).toFixed(0)}%`;
 }
 
 // =============================================================================
-// Outcome Bar Component
+// Binary Outcome Component (2 outcomes)
 // =============================================================================
 
-interface OutcomeBarProps {
-  title: string;
-  price: number;
-  isLeading?: boolean;
+interface BinaryOutcomeProps {
+  outcomes: MarketSummary["outcomes"];
 }
 
-function OutcomeBar({ title, price, isLeading }: OutcomeBarProps) {
+function BinaryOutcome({ outcomes }: BinaryOutcomeProps) {
+  // Assume binary markets are typically [Outcome A, Outcome B]
+  // Ideally sorted so "Yes" is first or second depending on convention. 
+  // Let's sort by ID or title to be consistent.
+  // For "Yes/No", usually Yes is high price or first.
+  
+  // Find Yes/No if they exist
+  const yesOutcome = outcomes.find(o => o.title.toLowerCase() === 'yes');
+  const noOutcome = outcomes.find(o => o.title.toLowerCase() === 'no');
+  
+  // If Yes/No market, use specific order [Yes, No]
+  const orderedOutcomes = yesOutcome && noOutcome 
+    ? [yesOutcome, noOutcome]
+    : outcomes;
+
+  const [outcomeLeft, outcomeRight] = orderedOutcomes;
+  
+  // Colors for the bar
+  // Left: usually green/teal/blue
+  // Right: usually red/pink/orange
+  const leftColor = "bg-[#10b981]"; // emerald-500
+  const rightColor = "bg-[#ec4899]"; // pink-500 (or rose)
+
   return (
-    <div className="flex items-center justify-between gap-2 text-sm">
-      <span className={cn("truncate", isLeading && "font-medium")}>{title}</span>
-      <div className="flex items-center gap-2">
-        <div className="h-1.5 w-16 overflow-hidden rounded-full bg-muted">
-          <div
-            className={cn(
-              "h-full rounded-full transition-all",
-              isLeading ? "bg-emerald-500" : "bg-muted-foreground/30"
-            )}
-            style={{ width: `${price * 100}%` }}
-          />
-        </div>
-        <span
-          className={cn(
-            "w-10 text-right font-mono text-xs",
-            isLeading ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"
-          )}
-        >
-          {formatPercent(price)}
-        </span>
+    <div className="mt-4 space-y-4">
+      {/* Probability Bar */}
+      <div className="flex items-center justify-between text-sm font-bold mb-1.5">
+        <span className="text-emerald-500">{formatPercent(outcomeLeft.price)}</span>
+        <span className="text-rose-500">{formatPercent(outcomeRight.price)}</span>
       </div>
+      
+      <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-gray-800">
+        {/* Left bar */}
+        <div 
+          className="absolute left-0 top-0 h-full bg-linear-to-r from-emerald-400 to-emerald-600" 
+          style={{ width: `${outcomeLeft.price * 100}%` }}
+        />
+        {/* Right bar (background is sufficient if it's just 2, but for explicit dual color:) */}
+        <div 
+          className="absolute right-0 top-0 h-full bg-linear-to-l from-rose-400 to-rose-600" 
+          style={{ width: `${outcomeRight.price * 100}%` }} 
+        />
+        {/* Gap/Separator if needed, or just let them meet */}
+      </div>
+
+      {/* Buttons */}
+      <div className="grid grid-cols-2 gap-3">
+        <button className="group relative flex items-center justify-center rounded-xl border border-emerald-500/20 bg-emerald-500/10 py-3 text-sm font-bold text-emerald-500 transition-all hover:bg-emerald-500/20 hover:border-emerald-500/40 hover:shadow-[0_0_15px_rgba(16,185,129,0.2)]">
+          <span className="uppercase">{outcomeLeft.title}</span>
+        </button>
+        <button className="group relative flex items-center justify-center rounded-xl border border-rose-500/20 bg-rose-500/10 py-3 text-sm font-bold text-rose-500 transition-all hover:bg-rose-500/20 hover:border-rose-500/40 hover:shadow-[0_0_15px_rgba(244,63,94,0.2)]">
+          <span className="uppercase">{outcomeRight.title}</span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// =============================================================================
+// Multi Outcome Component (>2 outcomes)
+// =============================================================================
+
+interface MultiOutcomeProps {
+  outcomes: MarketSummary["outcomes"];
+}
+
+function MultiOutcome({ outcomes }: MultiOutcomeProps) {
+  const sortedOutcomes = [...outcomes].sort((a, b) => b.price - a.price).slice(0, 2);
+
+  return (
+    <div className="mt-3 space-y-2">
+      {sortedOutcomes.map((outcome, idx) => (
+        <div key={outcome.id} className="relative overflow-hidden rounded-lg bg-muted/30 p-2 hover:bg-muted/50 transition-colors">
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-sm font-medium truncate">{outcome.title}</span>
+            <span className="text-sm font-bold tabular-nums text-primary">
+              {formatPercent(outcome.price)}
+            </span>
+          </div>
+          {/* Simple bottom bar */}
+          <div className="absolute bottom-0 left-0 h-0.5 bg-primary/30" style={{ width: `${outcome.price * 100}%` }} />
+        </div>
+      ))}
     </div>
   );
 }
@@ -103,85 +154,62 @@ interface MarketCardProps {
 }
 
 export function MarketCard({ market }: MarketCardProps) {
-  // Find the leading outcome (highest probability)
-  const leadingOutcome = market.outcomes.reduce((prev, current) =>
-    current.price > prev.price ? current : prev
-  );
-
-  // Get state badge color
-  const stateBadgeVariant =
-    market.state === "open"
-      ? "default"
-      : market.state === "resolved"
-        ? "secondary"
-        : "outline";
+  const isBinary = market.outcomes.length === 2;
 
   return (
-    <Link href={`/markets/${market.slug}`}>
-      <Card className="group h-full transition-all hover:border-foreground/20 hover:shadow-md">
-        <CardHeader className="pb-3">
-          <div className="flex items-start gap-3">
-            {/* Market Image */}
-            {market.imageUrl && (
-              <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg bg-muted">
-                <Image
-                  src={market.imageUrl}
-                  alt={market.title}
-                  fill
-                  className="object-cover"
-                  sizes="48px"
-                />
-              </div>
-            )}
-            <div className="min-w-0 flex-1">
-              {/* Title */}
-              <h3 className="line-clamp-2 text-sm font-medium leading-tight group-hover:text-foreground/80">
-                {market.title}
-              </h3>
-              {/* Topics */}
-              <div className="mt-1 flex flex-wrap gap-1">
-                {market.topics.slice(0, 2).map((topic) => (
-                  <Badge key={topic} variant="secondary" className="text-[10px] px-1.5 py-0">
-                    {topic}
-                  </Badge>
-                ))}
-              </div>
+    <Link href={`/markets/${market.slug}`} className="block h-full">
+      <Card className="group h-full flex flex-col overflow-hidden border border-border/50 bg-card py-0 gap-0 transition-all hover:border-primary/50 hover:shadow-lg dark:hover:shadow-primary/5 hover:-translate-y-1 duration-300">
+        
+        {/* Cover Image Area */}
+        <div className="relative h-40 w-full overflow-hidden bg-muted/50">
+          {market.imageUrl ? (
+            <Image
+              src={market.imageUrl}
+              alt={market.title}
+              fill
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center bg-linear-to-br from-muted to-muted/80">
+              <BarChart3 className="h-8 w-8 text-muted-foreground/30" />
             </div>
-          </div>
-        </CardHeader>
+          )}
+          {/* Overlay gradient for better text contrast if we put text over it (optional, currently text is below) */}
+          <div className="absolute inset-0 bg-linear-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        </div>
 
-        <CardContent className="pt-0">
-          {/* Outcomes */}
-          <div className="space-y-2">
-            {market.outcomes.slice(0, 2).map((outcome) => (
-              <OutcomeBar
-                key={outcome.id}
-                title={outcome.title}
-                price={outcome.price}
-                isLeading={outcome.id === leadingOutcome.id}
-              />
-            ))}
-            {market.outcomes.length > 2 && (
-              <p className="text-xs text-muted-foreground">
-                +{market.outcomes.length - 2} more outcomes
-              </p>
+        <CardContent className="flex flex-1 flex-col px-4 py-3">
+          {/* Title */}
+          <h3 className="line-clamp-2 text-base font-bold leading-tight text-foreground mb-2 group-hover:text-primary transition-colors">
+            {market.title}
+          </h3>
+
+          {/* Outcome Section */}
+          <div className="flex-1">
+            {isBinary ? (
+              <BinaryOutcome outcomes={market.outcomes} />
+            ) : (
+              <MultiOutcome outcomes={market.outcomes} />
             )}
           </div>
 
-          {/* Stats */}
-          <div className="mt-4 flex items-center justify-between border-t pt-3 text-xs text-muted-foreground">
-            <div className="flex items-center gap-3">
-              <span title="24h Volume">
-                <span className="font-medium text-foreground">${formatCompact(market.volume24h)}</span> vol
-              </span>
-              <span title="Liquidity">
-                <span className="font-medium text-foreground">${formatCompact(market.liquidity)}</span> liq
-              </span>
+          {/* Footer Stats */}
+          <div className="mt-4 flex items-center justify-between border-t border-border/40 pt-3 text-xs font-medium text-muted-foreground">
+            
+            {/* Left: Avatars/Volume/Liquidity */}
+            <div className="flex items-center gap-4">
+              {/* Placeholder avatars group (visual candy) */}
+              <div className="flex -space-x-2">
+                <div className="h-5 w-5 rounded-full bg-linear-to-br from-blue-400 to-purple-500 ring-2 ring-background" />
+                <div className="h-5 w-5 rounded-full bg-linear-to-br from-emerald-400 to-teal-500 ring-2 ring-background" />
+              </div>
+              <span className="text-foreground/80 tabular-nums">{formatCompact(market.volume24h)} Vol</span>
             </div>
-            <div className="flex items-center gap-2">
-              <Badge variant={stateBadgeVariant} className="text-[10px]">
-                {market.state}
-              </Badge>
+
+            {/* Right: Date/Time */}
+            <div className="flex items-center gap-1.5 text-muted-foreground">
+              <Clock className="h-3.5 w-3.5" />
               <span>{formatTimeRemaining(market.expiresAt)}</span>
             </div>
           </div>
@@ -190,4 +218,3 @@ export function MarketCard({ market }: MarketCardProps) {
     </Link>
   );
 }
-
