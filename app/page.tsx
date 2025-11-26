@@ -47,7 +47,7 @@ function MarketsPageContent() {
       networkId: 2741, // Hardcoded to Abstract Mainnet as requested
       tokenAddress: tokens.USDC.address, // Only show USDC markets
       keyword: urlKeyword, // Use keyword from URL
-      state: filters.state,
+      state: "open", // Force only open/active markets as requested
       sort: filters.sort,
       // Fix: categories need to be capitalized for the API to work
       topics: filters.topics && filters.topics !== "all" 
@@ -88,7 +88,12 @@ function MarketsPageContent() {
   }, []);
 
   // Combine paginated results
-  const markets = data?.pages.flatMap((page) => page.data) ?? [];
+  const rawMarkets = data?.pages.flatMap((page) => page.data) ?? [];
+  const markets = rawMarkets.filter(market => {
+    if (!market.expiresAt) return true;
+    return new Date(market.expiresAt).getTime() > Date.now();
+  });
+
   const lastPage = data?.pages[data.pages.length - 1];
 
   return (

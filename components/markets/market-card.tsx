@@ -82,35 +82,34 @@ function BinaryOutcome({ outcomes }: BinaryOutcomeProps) {
   const rightColor = "bg-[#ec4899]"; // pink-500 (or rose)
 
   return (
-    <div className="mt-4 space-y-4">
+    <div className="mt-4 space-y-3">
       {/* Probability Bar */}
-      <div className="flex items-center justify-between text-sm font-bold mb-1.5">
-        <span className="text-emerald-500">{formatPercent(outcomeLeft.price)}</span>
-        <span className="text-rose-500">{formatPercent(outcomeRight.price)}</span>
+      <div className="flex items-center justify-between text-sm font-medium mb-1.5 px-0.5">
+        <span className="text-muted-foreground">{formatPercent(outcomeLeft.price)}</span>
+        <span className="text-muted-foreground">{formatPercent(outcomeRight.price)}</span>
       </div>
       
-      <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-gray-800">
+      <div className="relative h-2 w-full overflow-hidden rounded-full bg-secondary">
         {/* Left bar */}
         <div 
-          className="absolute left-0 top-0 h-full bg-linear-to-r from-emerald-400 to-emerald-600" 
+          className="absolute left-0 top-0 h-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.2)]" 
           style={{ width: `${outcomeLeft.price * 100}%` }}
         />
-        {/* Right bar (background is sufficient if it's just 2, but for explicit dual color:) */}
+        {/* Right bar */}
         <div 
-          className="absolute right-0 top-0 h-full bg-linear-to-l from-rose-400 to-rose-600" 
+          className="absolute right-0 top-0 h-full bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.2)]" 
           style={{ width: `${outcomeRight.price * 100}%` }} 
         />
-        {/* Gap/Separator if needed, or just let them meet */}
       </div>
 
       {/* Buttons */}
       <div className="grid grid-cols-2 gap-3">
-        <button className="group relative flex items-center justify-center rounded-xl border border-emerald-500/20 bg-emerald-500/10 py-3 text-sm font-bold text-emerald-500 transition-all hover:bg-emerald-500/20 hover:border-emerald-500/40 hover:shadow-[0_0_15px_rgba(16,185,129,0.2)]">
+        <div className="relative flex items-center justify-center rounded-xl border border-emerald-500/20 bg-emerald-500/10 py-3 text-sm font-bold text-emerald-500">
           <span className="uppercase">{outcomeLeft.title}</span>
-        </button>
-        <button className="group relative flex items-center justify-center rounded-xl border border-rose-500/20 bg-rose-500/10 py-3 text-sm font-bold text-rose-500 transition-all hover:bg-rose-500/20 hover:border-rose-500/40 hover:shadow-[0_0_15px_rgba(244,63,94,0.2)]">
+        </div>
+        <div className="relative flex items-center justify-center rounded-xl border border-rose-500/20 bg-rose-500/10 py-3 text-sm font-bold text-rose-500">
           <span className="uppercase">{outcomeRight.title}</span>
-        </button>
+        </div>
       </div>
     </div>
   );

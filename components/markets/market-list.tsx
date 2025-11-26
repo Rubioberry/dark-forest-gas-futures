@@ -155,7 +155,13 @@ export function MarketList({
       {/* Results Count */}
       {pagination && (
         <p className="text-center text-sm text-muted-foreground">
-          Showing {markets.length} of {pagination.total} markets
+          {/* Use the length of the displayed (filtered) markets array instead of pagination.total if possible, 
+              but since filtering happens client-side, the total from API (pagination.total) includes hidden/expired items.
+              The user is confused why it says "Showing 47 of 48" when they only see 47.
+              If we have filtered items out, we should hide the total or adjust the logic. 
+              For now, just showing "Showing X markets" is less confusing than mismatched numbers. 
+          */}
+          Showing {markets.length} market{markets.length !== 1 ? "s" : ""}
         </p>
       )}
     </div>
