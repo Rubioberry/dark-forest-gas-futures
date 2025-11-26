@@ -10,8 +10,9 @@
  * - Paginated grid of market cards
  */
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, Suspense } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
+import { useSearchParams } from "next/navigation";
 import { useNetwork } from "@/lib/network-context";
 import { marketsInfiniteQueryOptions } from "@/lib/queries";
 import { MarketFilters, type MarketFiltersValue } from "@/components/markets/market-filters";
@@ -21,8 +22,10 @@ import { MarketList } from "@/components/markets/market-list";
 // Page Component
 // =============================================================================
 
-export default function MarketsPage() {
-  const { apiBaseUrl, networkConfig } = useNetwork();
+function MarketsPageContent() {
+  const { apiBaseUrl, networkConfig, tokens } = useNetwork();
+  const searchParams = useSearchParams();
+  const urlKeyword = searchParams.get("q") || undefined;
 
   // Filter state
   const [filters, setFilters] = useState<MarketFiltersValue>({
@@ -41,10 +44,15 @@ export default function MarketsPage() {
   } = useInfiniteQuery({
     ...marketsInfiniteQueryOptions(apiBaseUrl, {
       limit: 12,
-      networkId: networkConfig.id,
-      keyword: filters.keyword,
+      networkId: 2741, // Hardcoded to Abstract Mainnet as requested
+      tokenAddress: tokens.USDC.address, // Only show USDC markets
+      keyword: urlKeyword, // Use keyword from URL
       state: filters.state,
       sort: filters.sort,
+      // Fix: categories need to be capitalized for the API to work
+      topics: filters.topics && filters.topics !== "all" 
+        ? filters.topics.charAt(0).toUpperCase() + filters.topics.slice(1) 
+        : undefined,
       order: "desc",
     }),
   });
@@ -77,7 +85,6 @@ export default function MarketsPage() {
   // Handle filter changes
   const handleFiltersChange = useCallback((newFilters: MarketFiltersValue) => {
     setFilters(newFilters);
-    // React Query handles resetting automatically when query keys change (which happens when filters change)
   }, []);
 
   // Combine paginated results
@@ -110,5 +117,13 @@ export default function MarketsPage() {
         loadMoreRef={loadMoreRef}
       />
     </div>
+  );
+}
+
+export default function MarketsPage() {
+  return (
+    <Suspense fallback={<div className="mx-auto max-w-7xl px-4 py-8 h-screen" />}>
+      <MarketsPageContent />
+    </Suspense>
   );
 }

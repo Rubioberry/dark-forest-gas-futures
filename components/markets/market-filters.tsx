@@ -4,24 +4,39 @@
  * Market Filters Component
  *
  * Search and filter controls for the markets list.
- * Includes:
+ * Features:
  * - Keyword search
- * - State filter (open/closed/resolved)
- * - Sort options
+ * - Category tags (Crypto, Sports, etc.)
+ * - Sort options (Trending, Popular, New)
  */
 
 import { useState, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Search, X } from "lucide-react";
+import { Search, X, Flame, Trophy, Clock } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { MarketsQueryParams } from "@/lib/types";
+
+// =============================================================================
+// Constants
+// =============================================================================
+
+const CATEGORIES = [
+  { id: "all", label: "All" },
+  { id: "crypto", label: "Crypto" },
+  { id: "sports", label: "Sports" },
+  { id: "politics", label: "Politics" },
+  { id: "economy", label: "Economy" },
+  { id: "gaming", label: "Gaming" },
+  { id: "culture", label: "Culture" },
+  { id: "sentiment", label: "Sentiment" },
+] as const;
+
+const SORT_OPTIONS = [
+  { id: "volume_24h", label: "Trending", icon: Flame },
+  { id: "volume", label: "Popular", icon: Trophy },
+  { id: "published_at", label: "New", icon: Clock },
+] as const;
 
 // =============================================================================
 // Types
@@ -29,8 +44,9 @@ import type { MarketsQueryParams } from "@/lib/types";
 
 export interface MarketFiltersValue {
   keyword?: string;
-  state?: "open" | "closed" | "resolved";
+  topics?: string;
   sort?: MarketsQueryParams["sort"];
+  state?: "open" | "closed" | "resolved";
 }
 
 interface MarketFiltersProps {
@@ -43,27 +59,13 @@ interface MarketFiltersProps {
 // =============================================================================
 
 export function MarketFilters({ value, onChange }: MarketFiltersProps) {
-  // Local state for keyword input (debounced)
-  const [keywordInput, setKeywordInput] = useState(value.keyword ?? "");
+  // Remove local state for keyword input since it's moved to header
 
-  // Handle keyword search with debounce
-  const handleKeywordChange = useCallback(
-    (newKeyword: string) => {
-      setKeywordInput(newKeyword);
-      // Simple debounce: update parent after typing stops
-      const timeoutId = setTimeout(() => {
-        onChange({ ...value, keyword: newKeyword || undefined });
-      }, 300);
-      return () => clearTimeout(timeoutId);
-    },
-    [onChange, value]
-  );
-
-  const handleStateChange = useCallback(
-    (newState: string) => {
+  const handleCategoryChange = useCallback(
+    (category: string) => {
       onChange({
         ...value,
-        state: newState === "all" ? undefined : (newState as MarketFiltersValue["state"]),
+        topics: category === "all" ? undefined : category,
       });
     },
     [onChange, value]
@@ -71,69 +73,62 @@ export function MarketFilters({ value, onChange }: MarketFiltersProps) {
 
   const handleSortChange = useCallback(
     (newSort: string) => {
-      onChange({ ...value, sort: newSort as MarketFiltersValue["sort"] });
+      onChange({ ...value, sort: newSort as MarketsQueryParams["sort"] });
     },
     [onChange, value]
   );
 
-  const clearFilters = useCallback(() => {
-    setKeywordInput("");
-    onChange({});
-  }, [onChange]);
-
-  const hasFilters = value.keyword || value.state || value.sort;
+  const currentCategory = value.topics || "all";
+  const currentSort = value.sort || "volume_24h";
 
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      {/* Search */}
-      <div className="relative flex-1 sm:max-w-sm">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          type="search"
-          placeholder="Search markets..."
-          value={keywordInput}
-          onChange={(e) => handleKeywordChange(e.target.value)}
-          className="pl-9"
-        />
+    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+      {/* Categories */}
+      <div className="w-full overflow-hidden">
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 lg:pb-0 scrollbar-hide mask-fade-right no-scrollbar [-ms-overflow-style:none] [scrollbar-width:none]">
+          {CATEGORIES.map((category) => (
+            <button
+              key={category.id}
+              onClick={() => handleCategoryChange(category.id)}
+              className={cn(
+                "flex h-8 lg:h-9 items-center justify-center rounded-full px-3 lg:px-4 text-xs lg:text-sm font-medium transition-all whitespace-nowrap flex-shrink-0",
+                currentCategory.toLowerCase() === category.id
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+              )}
+            >
+              {category.label}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Filters */}
-      <div className="flex items-center gap-2">
-        {/* State Filter */}
-        <Select value={value.state ?? "all"} onValueChange={handleStateChange}>
-          <SelectTrigger className="w-[120px]">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="open">Open</SelectItem>
-            <SelectItem value="closed">Closed</SelectItem>
-            <SelectItem value="resolved">Resolved</SelectItem>
-          </SelectContent>
-        </Select>
-
-        {/* Sort */}
-        <Select value={value.sort ?? "volume"} onValueChange={handleSortChange}>
-          <SelectTrigger className="w-[140px]">
-            <SelectValue placeholder="Sort by" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="volume">Total Volume</SelectItem>
-            <SelectItem value="volume_24h">24h Volume</SelectItem>
-            <SelectItem value="liquidity">Liquidity</SelectItem>
-            <SelectItem value="expires_at">Expiry Date</SelectItem>
-            <SelectItem value="published_at">Newest</SelectItem>
-          </SelectContent>
-        </Select>
-
-        {/* Clear Filters */}
-        {hasFilters && (
-          <Button variant="ghost" size="icon" onClick={clearFilters} title="Clear filters">
-            <X className="h-4 w-4" />
-          </Button>
-        )}
+      {/* Sort Options */}
+      <div className="flex items-center justify-between sm:justify-end gap-4">
+        <div className="flex items-center gap-1 p-1 bg-muted/30 rounded-lg border border-border/40 w-full sm:w-auto overflow-x-auto">
+          {SORT_OPTIONS.map((option) => {
+            const Icon = option.icon;
+            const isActive = currentSort === option.id;
+            return (
+              <button
+                key={option.id}
+                onClick={() => handleSortChange(option.id)}
+                className={cn(
+                  "flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-all flex-1 sm:flex-initial whitespace-nowrap",
+                  isActive
+                    ? "bg-background text-foreground shadow-sm ring-1 ring-black/5 dark:ring-white/10"
+                    : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                )}
+              >
+                <Icon className="h-3.5 w-3.5 shrink-0" />
+                <span>{option.label}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
 }
+
 

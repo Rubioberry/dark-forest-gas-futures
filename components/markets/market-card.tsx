@@ -185,9 +185,11 @@ export function MarketCard({ market }: MarketCardProps) {
 
         <CardContent className="flex flex-1 flex-col px-4 pt-3 pb-2 relative z-10 bg-card -mt-px">
           {/* Title */}
-          <h3 className="line-clamp-2 h-10 text-base font-bold leading-tight text-foreground mb-2 group-hover:text-primary transition-colors">
-            {market.title}
-          </h3>
+          <div className="h-10 mb-2 flex items-center">
+            <h3 className="line-clamp-2 text-base font-bold leading-tight text-foreground group-hover:text-primary transition-colors">
+              {market.title}
+            </h3>
+          </div>
 
           {/* Outcome Section */}
           <div className="flex-1">
