@@ -9,7 +9,7 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useAccount } from "wagmi";
 import { useNetwork } from "@/lib/network-context";
-import { userEventsInfiniteQueryOptions } from "@/lib/queries/portfolio";
+import { userEventsInfiniteQueryOptions } from "@/lib/queries";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";

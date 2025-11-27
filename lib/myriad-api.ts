@@ -15,8 +15,6 @@ import type {
   MarketsQueryParams,
   MarketsResponse,
   MarketResponse,
-  MarketEventsQueryParams,
-  MarketEventsResponse,
   PortfolioQueryParams,
   PortfolioResponse,
   UserEventsQueryParams,
@@ -193,28 +191,6 @@ export async function getMarket(
   const params = typeof slugOrId === "number" && networkId ? { networkId } : undefined;
   const response = await apiGet<MarketResponse>(baseUrl, path, params);
   return toCamelCase(response) as MarketResponse;
-}
-
-/**
- * Fetch trade events (history) for a market.
- *
- * @param baseUrl - API base URL
- * @param slugOrId - Market slug or ID
- * @param params - Query parameters
- * @param networkId - Required when using market ID
- */
-export async function getMarketEvents(
-  baseUrl: string,
-  slugOrId: string | number,
-  params: MarketEventsQueryParams = {},
-  networkId?: number
-): Promise<MarketEventsResponse> {
-  const path = `/markets/${slugOrId}/events`;
-  const response = await apiGet<MarketEventsResponse>(baseUrl, path, {
-    ...params,
-    networkId: typeof slugOrId === "number" ? networkId : undefined,
-  });
-  return toCamelCase(response) as MarketEventsResponse;
 }
 
 // =============================================================================

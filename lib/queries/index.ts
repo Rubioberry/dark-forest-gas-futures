@@ -8,14 +8,12 @@
 // Markets
 export { 
   marketKeys, 
-  marketsQueryOptions, 
   marketsInfiniteQueryOptions,
-  marketQueryOptions, 
-  marketEventsQueryOptions 
+  marketQueryOptions,
 } from "./markets";
 
 // Portfolio
-export { portfolioKeys, portfolioQueryOptions } from "./portfolio";
+export { portfolioKeys, portfolioQueryOptions, userEventsInfiniteQueryOptions } from "./portfolio";
 
 // Profile
 export { profileKeys, abstractProfileQueryOptions } from "./profile";

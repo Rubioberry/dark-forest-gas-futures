@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Loader2, Wallet, Copy, LogOut, Github, Book, Plus, Check, ArrowUpRight, User, Moon, Sun } from "lucide-react";
+import { Loader2, Wallet, Copy, LogOut, Github, Book, Check, ArrowUpRight, User, Moon } from "lucide-react";
 import { TOKENS } from "@/lib/config";
 import { toast } from "sonner";
 import { erc20Abi, formatUnits } from "viem";

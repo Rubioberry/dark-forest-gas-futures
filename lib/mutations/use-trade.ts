@@ -15,8 +15,7 @@ import { useAbstractClient } from "@abstract-foundation/agw-react";
 import { toast } from "sonner";
 import { useNetwork } from "@/lib/network-context";
 import { TOKENS, REFERRAL_CODE, NETWORK } from "@/lib/config";
-import { marketKeys } from "@/lib/queries";
-import { portfolioKeys } from "@/lib/queries/portfolio";
+import { marketKeys, portfolioKeys } from "@/lib/queries";
 import type { TradeAction, TransactionStatus } from "@/lib/types";
 
 // =============================================================================
@@ -106,54 +105,39 @@ export function useTrade() {
   const { contracts, apiBaseUrl } = useNetwork();
   const queryClient = useQueryClient();
   const { sendCallsAsync, isPending: isSending, error: sendError } = useSendCalls();
-  
-  // Track the bundle ID from the async call
   const [bundleId, setBundleId] = useState<string | null>(null);
   
-  // Track bundle status with polling until confirmed or failed
   const { data: callsStatus, isFetching: isPolling } = useCallsStatus({
     id: bundleId as string,
     query: {
       enabled: !!bundleId,
-      // Always fetch fresh data when polling
       staleTime: 0,
-      // Poll every second while pending, stop when confirmed/failed
-      // Status values: "pending" | "success" | "failure"
+      // Poll every second until we get a final state (success/failure)
       refetchInterval: (query) => {
         const txStatus = query.state.data?.status;
-        // Stop polling once we have a final state
-        if (txStatus === "success") return false;
-        if (txStatus === "failure") return false;
-        return 1000; // Keep polling every second
+        if (txStatus === "success" || txStatus === "failure") return false;
+        return 1000;
       },
     },
   });
 
-  // Track detailed transaction status
   const [status, setStatus] = useState<TransactionStatus>("idle");
   const [currentAction, setCurrentAction] = useState<TradeAction | null>(null);
 
-  // Update status based on calls status - handle success AND failure
-  // GetCallsStatusReturnType.status values: "pending" | "success" | "failure"
   useEffect(() => {
     if (!callsStatus) return;
     
     const txStatus = callsStatus.status;
     
-    // Handle success (all calls in batch succeeded)
     if (txStatus === "success") {
       setStatus("confirmed");
-      
-      // Log receipts for debugging
       console.log("Transaction confirmed! Receipts:", callsStatus.receipts);
       
-      // Get the transaction hash from receipts (usually the last receipt is the main tx)
       const txHash = callsStatus.receipts?.[callsStatus.receipts.length - 1]?.transactionHash;
       const explorerUrl = txHash 
         ? `${NETWORK.blockExplorer}/tx/${txHash}` 
         : undefined;
       
-      // Show success toast with link to explorer
       toast.success(
         currentAction === "buy" ? "Purchase confirmed!" : "Sale confirmed!",
         {
@@ -166,7 +150,6 @@ export function useTrade() {
         }
       );
       
-      // Invalidate caches on success
       queryClient.invalidateQueries({ queryKey: marketKeys.all });
       if (address) {
         queryClient.invalidateQueries({
@@ -174,30 +157,26 @@ export function useTrade() {
         });
       }
       
-      // Reset after delay
       setTimeout(() => {
         setStatus("idle");
         setCurrentAction(null);
-        setBundleId(null); // Clear bundle ID
+        setBundleId(null);
       }, 3000);
     }
     
-    // Handle failure (transaction failed on-chain)
     if (txStatus === "failure") {
       console.error("Transaction bundle failed:", callsStatus);
       setStatus("failed");
       
-      // Show error toast
       toast.error("Transaction failed", {
         description: "The transaction was reverted on-chain. Please try again.",
         duration: 5000,
       });
       
-      // Reset after delay
       setTimeout(() => {
         setStatus("idle");
         setCurrentAction(null);
-        setBundleId(null); // Clear bundle ID
+        setBundleId(null);
       }, 3000);
     }
   }, [callsStatus, queryClient, address, apiBaseUrl, currentAction]);
@@ -209,7 +188,6 @@ export function useTrade() {
 
       setCurrentAction(params.action);
       
-      // Use the provided token address, or fall back to USDC as default
       const tokenAddress = (params.tokenAddress || TOKENS.USDC.address) as Hex;
       const predictionMarketAddress = contracts.predictionMarket as Hex;
       
@@ -217,17 +195,11 @@ export function useTrade() {
         throw new Error("No token address available for this market");
       }
 
-      // Use token decimals (default to 6 for USDC)
       const tokenDecimals = params.tokenDecimals ?? 6;
-
-      // Large approval amount (1 trillion for the token)
       const approvalAmount = parseUnits("1000000000000", tokenDecimals);
-
-      // Build the calls array
       const calls: Array<{ to: Hex; data: Hex; value?: bigint }> = [];
       
-      // Convert value and sharesThreshold to the correct decimals
-      // The contract expects both in token decimals (e.g., 6 for USDC)
+      // Convert to contract-expected decimals (e.g., 6 for USDC)
       const valueInDecimals = parseUnits(params.value.toString(), tokenDecimals);
       const sharesThresholdInDecimals = parseUnits(params.sharesThreshold.toString(), tokenDecimals);
       
@@ -241,16 +213,11 @@ export function useTrade() {
         sharesThresholdInDecimals: sharesThresholdInDecimals.toString(),
         tokenDecimals,
         referralCode: REFERRAL_CODE,
-        // For debugging: show what the contract args will be
-        contractArgs: params.action === "buy" 
-          ? `referralBuy(${params.marketId}, ${params.outcomeId}, ${sharesThresholdInDecimals} minShares, ${valueInDecimals} value, "${REFERRAL_CODE}")`
-          : `referralSell(${params.marketId}, ${params.outcomeId}, ${valueInDecimals} value, ${sharesThresholdInDecimals} maxShares, "${REFERRAL_CODE}")`,
       });
 
       if (params.action === "buy") {
         setStatus("approving");
         
-        // 1. Approval call
         const approveData = encodeFunctionData({
           abi: ERC20_ABI,
           functionName: "approve",
@@ -262,16 +229,15 @@ export function useTrade() {
           data: approveData,
         });
 
-        // 2. Buy call - encode locally with correct decimals
         const buyData = encodeFunctionData({
           abi: PREDICTION_MARKET_ABI,
           functionName: "referralBuy",
           args: [
             BigInt(params.marketId),
             BigInt(params.outcomeId),
-            sharesThresholdInDecimals, // minOutcomeSharesToBuy
-            valueInDecimals, // value in token decimals
-            REFERRAL_CODE || "", // referral code
+            sharesThresholdInDecimals,
+            valueInDecimals,
+            REFERRAL_CODE || "",
           ],
         });
         
@@ -280,7 +246,6 @@ export function useTrade() {
           data: buyData,
         });
       } else {
-        // Sell - no approval needed, encode locally
         setStatus("pending_signature");
         
         const sellData = encodeFunctionData({
@@ -289,9 +254,9 @@ export function useTrade() {
           args: [
             BigInt(params.marketId),
             BigInt(params.outcomeId),
-            valueInDecimals, // value to receive in token decimals
-            sharesThresholdInDecimals, // maxOutcomeSharesToSell
-            REFERRAL_CODE || "", // referral code
+            valueInDecimals,
+            sharesThresholdInDecimals,
+            REFERRAL_CODE || "",
           ],
         });
         
@@ -304,14 +269,12 @@ export function useTrade() {
       console.log("Sending batched calls:", calls);
       setStatus("pending_signature");
 
-      // Send batched calls - single wallet popup!
       const result = await sendCallsAsync({
         calls,
       });
 
       console.log("Result:", result);
 
-      // Extract the bundle ID from the result
       const resultBundleId = typeof result === "object" && result !== null 
         ? result.id 
         : result;
@@ -341,12 +304,9 @@ export function useTrade() {
     [mutation]
   );
 
-  // Helper to check if bundle is confirmed
-  // GetCallsStatusReturnType.status: "pending" | "success" | "failure"
   const isConfirmed = callsStatus?.status === "success";
   const isFailed = callsStatus?.status === "failure";
 
-  // Reset function that clears all state
   const reset = useCallback(() => {
     mutation.reset();
     setBundleId(null);

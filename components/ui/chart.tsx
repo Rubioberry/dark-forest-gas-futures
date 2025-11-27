@@ -102,18 +102,27 @@ ${colorConfig
 
 const ChartTooltip = RechartsPrimitive.Tooltip;
 
-const ChartTooltipContent = React.forwardRef<
-  HTMLDivElement,
-  React.ComponentProps<typeof RechartsPrimitive.Tooltip> &
-    React.ComponentProps<"div"> & {
-      hideLabel?: boolean;
-      hideIndicator?: boolean;
-      indicator?: "line" | "dot" | "dashed";
-      nameKey?: string;
-      labelKey?: string;
-      sort?: "asc" | "desc";
-    }
->(
+interface ChartTooltipContentProps extends React.ComponentProps<"div"> {
+  hideLabel?: boolean;
+  hideIndicator?: boolean;
+  indicator?: "line" | "dot" | "dashed";
+  nameKey?: string;
+  labelKey?: string;
+  sort?: "asc" | "desc";
+  // Recharts tooltip props
+  active?: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  payload?: any[];
+  label?: string | number;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  labelFormatter?: (label: any, payload: any[]) => React.ReactNode;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  formatter?: (value: any, name: string, item: any, index: number, payload: any[]) => React.ReactNode;
+  color?: string;
+  labelClassName?: string;
+}
+
+const ChartTooltipContent = React.forwardRef<HTMLDivElement, ChartTooltipContentProps>(
   (
     {
       active,
@@ -205,27 +214,16 @@ const ChartTooltipContent = React.forwardRef<
             const dataKeyConfig = item.dataKey ? config[item.dataKey as keyof typeof config] : undefined;
             const indicatorColor = color || item.payload?.fill || item.color;
 
-            // Get the correct color - check config color, stroke, then color property
-            // Handle gradient fills (url(...)) by skipping them
+            // Resolve color from config, stroke, fill, etc. (skip gradient fills)
             const effectiveColor = (() => {
               if (color) return color;
-              // Check chart config color by dataKey first (most reliable for our use case)
               const configColor = dataKeyConfig?.color || itemConfig?.color;
               if (configColor && typeof configColor === 'string') return configColor;
-              // Check stroke color (for line/area charts)
               if (item.stroke && typeof item.stroke === 'string' && !item.stroke.startsWith('url(')) return item.stroke;
-              // Check item color
               if (item.color && typeof item.color === 'string' && !item.color.startsWith('url(')) return item.color;
-              // Check payload fill (skip gradients)
               const fill = item.payload?.fill || item.fill;
-              if (fill && typeof fill === 'string' && !fill.startsWith('url(')) {
-                return fill;
-              }
-              // Check indicator color (skip gradients)
-              if (indicatorColor && typeof indicatorColor === 'string' && !indicatorColor.startsWith('url(')) {
-                return indicatorColor;
-              }
-              // Final fallback - a visible color
+              if (fill && typeof fill === 'string' && !fill.startsWith('url(')) return fill;
+              if (indicatorColor && typeof indicatorColor === 'string' && !indicatorColor.startsWith('url(')) return indicatorColor;
               return "hsl(var(--foreground))";
             })();
 
@@ -297,14 +295,15 @@ ChartTooltipContent.displayName = "ChartTooltip";
 
 const ChartLegend = RechartsPrimitive.Legend;
 
-const ChartLegendContent = React.forwardRef<
-  HTMLDivElement,
-  React.ComponentProps<"div"> &
-    Pick<RechartsPrimitive.LegendProps, "payload" | "verticalAlign"> & {
-      hideIcon?: boolean;
-      nameKey?: string;
-    }
->(
+interface ChartLegendContentProps extends React.ComponentProps<"div"> {
+  hideIcon?: boolean;
+  nameKey?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  payload?: any[];
+  verticalAlign?: "top" | "bottom" | "middle";
+}
+
+const ChartLegendContent = React.forwardRef<HTMLDivElement, ChartLegendContentProps>(
   (
     { className, hideIcon = false, payload, verticalAlign = "bottom", nameKey },
     ref

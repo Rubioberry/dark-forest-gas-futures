@@ -79,7 +79,7 @@ export default function MarketDetailPage() {
   // Fetch market data
   const { data: market, isPending, error } = useQuery(marketQueryOptions(apiBaseUrl, slug));
 
-  // Set initial selected outcome to the most likely (highest probability)
+  // Initialize to the highest probability outcome
   if (market && selectedOutcomeId === null && market.outcomes.length > 0) {
     const sortedOutcomes = [...market.outcomes].sort((a, b) => b.price - a.price);
     setSelectedOutcomeId(sortedOutcomes[0].id);

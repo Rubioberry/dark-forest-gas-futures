@@ -5,7 +5,7 @@
  * These types help ensure type safety when interacting with the API.
  */
 
-import type { Market, MarketSummary, MarketEvent, OutcomeHolders } from "./market";
+import type { Market, MarketSummary, MarketEvent } from "./market";
 import type { Position } from "./portfolio";
 
 // =============================================================================
@@ -79,48 +79,6 @@ export interface MarketsResponse extends PaginatedResponse<MarketSummary> {}
 export type MarketResponse = Market;
 
 // =============================================================================
-// Market Events API
-// =============================================================================
-
-/**
- * Query parameters for market events.
- */
-export interface MarketEventsQueryParams {
-  /** Page number */
-  page?: number;
-  /** Items per page */
-  limit?: number;
-  /** Filter events since this timestamp (unix seconds) */
-  since?: number;
-  /** Filter events until this timestamp (unix seconds) */
-  until?: number;
-}
-
-/**
- * Response from GET /markets/:id/events endpoint.
- */
-export interface MarketEventsResponse extends PaginatedResponse<MarketEvent> {}
-
-// =============================================================================
-// Market Holders API
-// =============================================================================
-
-/**
- * Query parameters for market holders.
- */
-export interface MarketHoldersQueryParams {
-  /** Page number */
-  page?: number;
-  /** Items per page (applies per outcome) */
-  limit?: number;
-}
-
-/**
- * Response from GET /markets/:id/holders endpoint.
- */
-export interface MarketHoldersResponse extends PaginatedResponse<OutcomeHolders> {}
-
-// =============================================================================
 // User API
 // =============================================================================
 
@@ -169,47 +127,6 @@ export interface PortfolioQueryParams {
  * Response from GET /users/:address/portfolio endpoint.
  */
 export interface PortfolioResponse extends PaginatedResponse<Position> {}
-
-// =============================================================================
-// Questions API
-// =============================================================================
-
-/**
- * A question is a canonical proposition that can have markets on multiple chains.
- */
-export interface Question {
-  /** Question ID */
-  id: number;
-  /** Question title */
-  title: string;
-  /** Expiration timestamp */
-  expiresAt: string;
-  /** Number of markets for this question */
-  marketCount: number;
-  /** Markets for this question across chains */
-  markets: MarketSummary[];
-}
-
-/**
- * Query parameters for listing questions.
- */
-export interface QuestionsQueryParams {
-  /** Page number */
-  page?: number;
-  /** Items per page */
-  limit?: number;
-  /** Search keyword */
-  keyword?: string;
-  /** Minimum number of linked markets */
-  minMarkets?: number;
-  /** Maximum number of linked markets */
-  maxMarkets?: number;
-}
-
-/**
- * Response from GET /questions endpoint.
- */
-export interface QuestionsResponse extends PaginatedResponse<Question> {}
 
 // =============================================================================
 // Error Response

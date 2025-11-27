@@ -95,9 +95,8 @@ export function PriceChart({ outcomes, selectedOutcomeId, showLegend = false }: 
     return config;
   }, [outcomes]);
 
-  // Process chart data - merge all outcome price data into unified time series
+  // Merge all outcome price data into a unified time series
   const chartData = useMemo(() => {
-    // Get price charts for all outcomes for the selected timeframe
     const allPriceData: Map<number, Record<string, number>> = new Map();
 
     outcomes.forEach((outcome) => {
@@ -125,14 +124,12 @@ export function PriceChart({ outcomes, selectedOutcomeId, showLegend = false }: 
     return Array.from(allPriceData.values()).sort((a, b) => a.timestamp - b.timestamp);
   }, [outcomes, timeFrame]);
 
-  // Find the outcome with the highest current price for display
   const topOutcome = useMemo(() => {
     return outcomes.reduce((top, current) =>
       current.price > top.price ? current : top
     );
   }, [outcomes]);
 
-  // Get change percent for selected timeframe
   const changePercent = useMemo(() => {
     const priceCharts = (topOutcome as unknown as Record<string, unknown>).price_charts ?? topOutcome.priceCharts;
     if (!priceCharts || !Array.isArray(priceCharts)) return 0;
@@ -232,8 +229,9 @@ export function PriceChart({ outcomes, selectedOutcomeId, showLegend = false }: 
               content={
                 <ChartTooltipContent
                   labelFormatter={(_, payload) => {
-                    if (payload?.[0]?.payload?.timestamp) {
-                      return formatTooltipDate(payload[0].payload.timestamp);
+                    const items = payload as Array<{ payload?: { timestamp?: number } }>;
+                    if (items?.[0]?.payload?.timestamp) {
+                      return formatTooltipDate(items[0].payload.timestamp);
                     }
                     return "";
                   }}

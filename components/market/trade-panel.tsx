@@ -25,7 +25,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useNetwork } from "@/lib/network-context";
 import { getQuote } from "@/lib/myriad-api";
 import { useTrade } from "@/lib/mutations";
-import { portfolioQueryOptions } from "@/lib/queries/portfolio";
+import { portfolioQueryOptions } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 import { TOKENS } from "@/lib/config";
 import type { Market, TradeAction, Quote } from "@/lib/types";
@@ -50,7 +50,6 @@ export function TradePanel({ market, selectedOutcomeId, onOutcomeChange }: Trade
   const { apiBaseUrl, networkConfig } = useNetwork();
   const { trade, isPending: isTrading, isConfirming, status: tradeStatus } = useTrade();
 
-  // Form state
   const [action, setAction] = useState<TradeAction>("buy");
   const [amount, setAmount] = useState("");
   const [quote, setQuote] = useState<Quote | null>(null);
@@ -60,7 +59,6 @@ export function TradePanel({ market, selectedOutcomeId, onOutcomeChange }: Trade
   const selectedOutcome = market.outcomes.find((o) => o.id === selectedOutcomeId);
   const sortedOutcomes = [...market.outcomes].sort((a, b) => b.price - a.price);
 
-  // Fetch USDC balance for buy tab
   const { data: usdcBalanceRaw } = useReadContract({
     address: TOKENS.USDC.address,
     abi: erc20Abi,
@@ -77,7 +75,6 @@ export function TradePanel({ market, selectedOutcomeId, onOutcomeChange }: Trade
     return parseFloat(formatUnits(usdcBalanceRaw, TOKENS.USDC.decimals));
   }, [usdcBalanceRaw]);
 
-  // Fetch user's positions to get shares for sell tab
   const { data: portfolioData } = useQuery({
     ...portfolioQueryOptions(apiBaseUrl, address ?? "", {
       networkId: networkConfig.id,
@@ -86,7 +83,6 @@ export function TradePanel({ market, selectedOutcomeId, onOutcomeChange }: Trade
     enabled: !!address && action === "sell",
   });
 
-  // Get shares for the selected outcome
   const sharesBalance = useMemo(() => {
     if (!portfolioData?.data) return 0;
     const position = portfolioData.data.find(
@@ -95,16 +91,13 @@ export function TradePanel({ market, selectedOutcomeId, onOutcomeChange }: Trade
     return position?.shares ?? 0;
   }, [portfolioData, selectedOutcomeId]);
 
-  // Calculate USD value of shares (shares × current price)
   const sharesValueUsd = useMemo(() => {
     if (!selectedOutcome || sharesBalance <= 0) return 0;
     return sharesBalance * selectedOutcome.price;
   }, [sharesBalance, selectedOutcome]);
 
-  // Available balance in USD for both buy and sell
   const availableBalanceUsd = action === "buy" ? usdcBalance : sharesValueUsd;
 
-  // Handle percentage button clicks (now always in USD)
   const handlePercentageClick = (percent: number) => {
     const value = availableBalanceUsd * (percent / 100);
     if (value > 0) {
@@ -112,7 +105,6 @@ export function TradePanel({ market, selectedOutcomeId, onOutcomeChange }: Trade
     }
   };
 
-  // Fetch quote when amount changes
   const fetchQuote = useCallback(async () => {
     const parsedAmount = parseFloat(amount);
     if (!parsedAmount || parsedAmount <= 0) {
@@ -124,15 +116,12 @@ export function TradePanel({ market, selectedOutcomeId, onOutcomeChange }: Trade
     setQuoteError(null);
 
     try {
-      // Both buy and sell now use USD input
-      // For buy: amount is USDC value to spend
-      // For sell: amount is USD value to sell, convert to shares
       let quoteParams: { value?: number; shares?: number };
       
       if (action === "buy") {
         quoteParams = { value: parsedAmount };
       } else {
-        // Convert USD value to shares: shares = usd / price
+        // For sell: convert USD value to shares (shares = usd / price)
         const price = selectedOutcome?.price ?? 0;
         if (price <= 0) {
           setQuoteError("Invalid price");
@@ -150,7 +139,7 @@ export function TradePanel({ market, selectedOutcomeId, onOutcomeChange }: Trade
         outcomeId: selectedOutcomeId,
         action,
         ...quoteParams,
-        slippage: 0.01, // 1% slippage
+        slippage: 0.01,
       });
       setQuote(newQuote);
     } catch (err) {
@@ -161,26 +150,20 @@ export function TradePanel({ market, selectedOutcomeId, onOutcomeChange }: Trade
     }
   }, [apiBaseUrl, market.id, networkConfig.id, selectedOutcomeId, action, amount, selectedOutcome?.price]);
 
-  // Debounced quote fetch
   useEffect(() => {
     const timer = setTimeout(fetchQuote, 500);
     return () => clearTimeout(timer);
   }, [fetchQuote]);
 
-  // Handle trade execution
   const handleTrade = async () => {
     if (!quote || !amount) return;
 
     try {
-      // For buy: value is USDC amount to spend, sharesThreshold is min shares to receive
-      // For sell: value is USDC amount to receive, sharesThreshold should be max shares to sell
-      // 
-      // NOTE: The API's shares_threshold for sell is actually a minimum VALUE threshold,
-      // not a shares threshold. So for sell, we calculate maxOutcomeSharesToSell ourselves
-      // as shares * (1 + slippage) to allow for some flexibility in execution.
+      // For sell: calculate max shares to sell with 1% slippage buffer
+      // For buy: use API's min shares threshold
       const sharesThreshold = action === "sell" 
-        ? quote.shares * 1.01  // Max shares to sell (with 1% buffer)
-        : quote.sharesThreshold;  // Min shares to receive (from API)
+        ? quote.shares * 1.01
+        : quote.sharesThreshold;
 
       await trade({
         action,
@@ -189,10 +172,9 @@ export function TradePanel({ market, selectedOutcomeId, onOutcomeChange }: Trade
         value: quote.value,
         sharesThreshold,
         tokenAddress: market.tokenAddress,
-        tokenDecimals: 6, // USDC uses 6 decimals
+        tokenDecimals: 6,
       });
 
-      // Reset form on success
       setAmount("");
       setQuote(null);
     } catch (err) {
@@ -200,20 +182,15 @@ export function TradePanel({ market, selectedOutcomeId, onOutcomeChange }: Trade
     }
   };
 
-  // Market closed check
   const isMarketOpen = market.state === "open";
 
-  // Calculate max profit for display
-  // For buy: max profit = potential payout (shares) - cost - fees
-  // For sell: profit = USDC received (quote.value) - fees
+  // Max profit: (buy) potential payout - cost - fees, (sell) USDC received - fees
   const maxProfit = quote
     ? action === "buy"
       ? quote.shares - quote.value - quote.fees.fee
       : quote.value - quote.fees.fee
     : 0;
-  
-  // For buy: percent return on investment
-  // For sell: percent of position value realized
+
   const maxProfitPercent = quote
     ? action === "buy" && quote.value > 0
       ? (maxProfit / quote.value) * 100

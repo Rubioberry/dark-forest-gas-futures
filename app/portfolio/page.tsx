@@ -142,8 +142,6 @@ function formatCurrency(value: number): string {
 
 function ProfileHeader({ address, positions }: { address: string; positions: Position[] }) {
   const { data: profile, isLoading } = useQuery(abstractProfileQueryOptions(address));
-  
-  // Calculate total P&L
   const totalProfit = positions.reduce((sum, p) => sum + p.profit, 0);
 
   if (isLoading) return <Skeleton className="h-24 w-full rounded-xl" />;

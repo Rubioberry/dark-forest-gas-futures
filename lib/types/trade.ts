@@ -145,15 +145,3 @@ export type TransactionStatus =
   | "confirmed"
   | "failed";
 
-/**
- * State for tracking a trade transaction through its lifecycle.
- */
-export interface TradeTransaction {
-  /** Current status */
-  status: TransactionStatus;
-  /** Transaction hash (once submitted) */
-  hash?: string;
-  /** Error message (if failed) */
-  error?: string;
-}
-

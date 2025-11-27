@@ -112,16 +112,3 @@ export const DEFAULT_SLIPPAGE = 0.005;
  */
 export const DEFAULT_PAGE_SIZE = 20;
 
-// =============================================================================
-// Helper Functions
-// =============================================================================
-
-/**
- * Get token by address.
- */
-export function getTokenByAddress(address: string) {
-  return Object.values(TOKENS).find(
-    (token) => token.address.toLowerCase() === address.toLowerCase()
-  );
-}
-

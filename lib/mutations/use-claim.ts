@@ -78,11 +78,9 @@ export function useClaim() {
       if (!address) throw new Error("Wallet not connected");
       if (!connector) throw new Error("No wallet connector available");
 
-      // Get the raw EIP-1193 provider from the connector
       const rawProvider = await connector.getProvider();
-
-      // Transform the provider to be AGW-compatible
-      // isPrivyCrossApp ensures the smart account address is used for gas estimation
+      
+      // Transform provider to be AGW-compatible (uses smart account for gas estimation)
       const provider = transformEIP1193Provider({
         provider: rawProvider as EIP1193Provider,
         chain: chain,
@@ -113,7 +111,6 @@ export function useClaim() {
     onSuccess: () => {
       setStatus("confirmed");
 
-      // Invalidate caches
       queryClient.invalidateQueries({ queryKey: marketKeys.all });
 
       if (address) {

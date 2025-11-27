@@ -13,8 +13,6 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
-import { ModeToggle } from "@/components/mode-toggle";
 import { Suspense, useState, useEffect } from "react";
 import { ConnectWalletButton } from "@/components/connect-wallet-button";
 

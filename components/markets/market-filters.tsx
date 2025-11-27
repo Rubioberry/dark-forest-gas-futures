@@ -10,10 +10,8 @@
  * - Sort options (Trending, Popular, New)
  */
 
-import { useState, useCallback } from "react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Search, X, Flame, Trophy, Clock } from "lucide-react";
+import { useCallback } from "react";
+import { Flame, Trophy, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { MarketsQueryParams } from "@/lib/types";
 
@@ -91,7 +89,7 @@ export function MarketFilters({ value, onChange }: MarketFiltersProps) {
               key={category.id}
               onClick={() => handleCategoryChange(category.id)}
               className={cn(
-                "flex h-8 lg:h-9 items-center justify-center rounded-full px-3 lg:px-4 text-xs lg:text-sm font-medium transition-all whitespace-nowrap flex-shrink-0",
+                "flex h-8 lg:h-9 items-center justify-center rounded-full px-3 lg:px-4 text-xs lg:text-sm font-medium transition-all whitespace-nowrap shrink-0",
                 currentCategory.toLowerCase() === category.id
                   ? "bg-primary text-primary-foreground shadow-sm"
                   : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"

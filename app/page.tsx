@@ -27,29 +27,26 @@ function MarketsPageContent() {
   const searchParams = useSearchParams();
   const urlKeyword = searchParams.get("q") || undefined;
 
-  // Filter state
   const [filters, setFilters] = useState<MarketFiltersValue>({
     sort: "volume_24h",
     state: "open",
   });
 
-  // Infinite Query
   const {
     data,
     isPending,
-    isFetching,
     isFetchingNextPage,
     fetchNextPage,
     hasNextPage,
   } = useInfiniteQuery({
     ...marketsInfiniteQueryOptions(apiBaseUrl, {
       limit: 12,
-      networkId: 2741, // Hardcoded to Abstract Mainnet as requested
-      tokenAddress: tokens.USDC.address, // Only show USDC markets
-      keyword: urlKeyword, // Use keyword from URL
-      state: "open", // Force only open/active markets as requested
+      networkId: 2741,
+      tokenAddress: tokens.USDC.address,
+      keyword: urlKeyword,
+      state: "open",
       sort: filters.sort,
-      // Fix: categories need to be capitalized for the API to work
+      // Categories must be capitalized for the API (e.g. "Crypto" not "crypto")
       topics: filters.topics && filters.topics !== "all" 
         ? filters.topics.charAt(0).toUpperCase() + filters.topics.slice(1) 
         : undefined,
@@ -57,7 +54,6 @@ function MarketsPageContent() {
     }),
   });
 
-  // Intersection Observer for Infinite Scroll
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -82,12 +78,10 @@ function MarketsPageContent() {
     };
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  // Handle filter changes
   const handleFiltersChange = useCallback((newFilters: MarketFiltersValue) => {
     setFilters(newFilters);
   }, []);
 
-  // Combine paginated results
   const rawMarkets = data?.pages.flatMap((page) => page.data) ?? [];
   const markets = rawMarkets.filter(market => {
     if (!market.expiresAt) return true;

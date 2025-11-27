@@ -68,9 +68,6 @@ export interface PriceChartTimeframe {
  */
 export type OutcomePriceCharts = PriceChartTimeframe[];
 
-/** Legacy tuple format for backwards compatibility: [timestamp, price] */
-export type PricePoint = [number, number];
-
 /**
  * Fee configuration for a market.
  * Fees are taken from trades and distributed to treasury, liquidity providers, etc.
@@ -218,33 +215,5 @@ export interface MarketEvent {
   blockNumber: number;
   /** ERC20 token address */
   token: string;
-}
-
-// =============================================================================
-// Market Holders
-// =============================================================================
-
-/**
- * A holder of shares for a specific outcome.
- */
-export interface OutcomeHolder {
-  /** Wallet address */
-  user: string;
-  /** Number of shares held */
-  shares: number;
-}
-
-/**
- * Holders grouped by outcome.
- */
-export interface OutcomeHolders {
-  /** Outcome ID */
-  outcomeId: number;
-  /** Outcome title */
-  outcomeTitle: string | null;
-  /** Total number of unique holders */
-  totalHolders: number;
-  /** List of holders (paginated) */
-  holders: OutcomeHolder[];
 }
 

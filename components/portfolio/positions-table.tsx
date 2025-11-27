@@ -149,7 +149,6 @@ export function PositionsTable({ positions, className }: PositionsTableProps) {
             sortedPositions.map((position) => {
               const statusConfig = getStatusBadge(position.status);
               const isProfitable = position.profit >= 0;
-              const canClaim = position.winningsToClaim && !position.winningsClaimed;
 
               return (
                 <TableRow 

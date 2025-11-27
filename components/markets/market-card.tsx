@@ -14,7 +14,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { BarChart3, Clock, DollarSign, Users } from "lucide-react";
+import { BarChart3, Clock } from "lucide-react";
 import type { MarketSummary } from "@/lib/types";
 
 // =============================================================================
