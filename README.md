@@ -45,7 +45,6 @@ Edit `.env.local` with your values:
 | Variable | Description | Required |
 |----------|-------------|----------|
 | `NEXT_PUBLIC_MYRIAD_API_KEY` | Myriad API key ([contact Myriad](https://myriadprotocol.com)) | Yes |
-| `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | WalletConnect Cloud project ID | Recommended |
 | `NEXT_PUBLIC_REFERRAL_CODE` | Your referral code for revenue sharing | Optional |
 
 ### 4. Start development server
