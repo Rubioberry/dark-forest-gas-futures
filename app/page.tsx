@@ -41,7 +41,7 @@ export default function Home() {
 
   useEffect(() => setMounted(true), [])
 
-  // Fixed USDC balance using direct contract read
+  // Fixed USDC balance using direct contract read (wagmi v2 way)
   const { data: usdcRawBalance } = useReadContract({
     address: USDC,
     abi: USDC_ABI,
