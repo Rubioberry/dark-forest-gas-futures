@@ -7,13 +7,16 @@ import {
   useDisconnect,
   useReadContract, 
   useWriteContract,
-  useWaitForTransactionReceipt,
-  useBalance
+  useWaitForTransactionReceipt
 } from 'wagmi'
 import { formatUnits, parseUnits } from 'viem'
 
 const CONTRACT = '0x7aB017737801C536De8f3914b8BcB62B4B3c2ac0'
 const USDC = '0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8'
+
+const USDC_ABI = [
+  "function balanceOf(address owner) view returns (uint256)"
+] as const
 
 const ABI = [
   "function getMarketCount() view returns (uint256)",
@@ -38,7 +41,16 @@ export default function Home() {
 
   useEffect(() => setMounted(true), [])
 
-  const { data: usdcBalance } = useBalance({ address, token: USDC, watch: true })
+  // Fixed USDC balance using direct contract read
+  const { data: usdcRawBalance } = useReadContract({
+    address: USDC,
+    abi: USDC_ABI,
+    functionName: 'balanceOf',
+    args: address ? [address] : undefined,
+    watch: true
+  })
+  const usdcBalance = usdcRawBalance ? Number(formatUnits(usdcRawBalance, 6)).toFixed(2) : '0.00'
+
   const { data: marketCount } = useReadContract({ address: CONTRACT, abi: ABI, functionName: 'getMarketCount' })
 
   const markets: any[] = []
@@ -86,7 +98,7 @@ export default function Home() {
             <>
               <div style={{textAlign:'center',marginTop:'12px'}}>Wallet: {address?.slice(0,6)}…{address?.slice(-4)}</div>
               <div className="text-center text-2xl mt-4">
-                Balance: ${usdcBalance ? Number(formatUnits(usdcBalance.value, 6)).toFixed(2) : '0.00'} USDC
+                Balance: ${usdcBalance} USDC
               </div>
               <button onClick={() => disconnect()} className="w-full mt-8 red">
                 DISCONNECT
@@ -107,7 +119,7 @@ export default function Home() {
             .map(m => {
               const timeLeft = Number(m.expiry) - Date.now()/1000
               const daysLeft = Math.floor(timeLeft / 86400)
-  const hoursLeft = Math.floor((timeLeft % 86400) / 3600)
+              const hoursLeft = Math.floor((timeLeft % 86400) / 3600)
               const target = Number(m.targetBaseFee) / 1e9
               const userLong = Number(formatUnits(m.userLong || 0n, 6))
               const userShort = Number(formatUnits(m.userShort || 0n, 6))
