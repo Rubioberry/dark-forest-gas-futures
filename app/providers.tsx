@@ -1,30 +1,17 @@
-"use client";
+'use client'
 
-/**
- * App Providers
- *
- * This file wraps the application with all necessary providers:
- * - NextAbstractWalletProvider: Wraps Wagmi, QueryClient, and AbstractWalletProvider for wallet connection and blockchain interactions
- * - NetworkProvider: Network configuration
- *
- * The provider order matters - outer providers are available to inner ones.
- */
+import { WagmiProvider } from 'wagmi'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { config } from '../config/wagmi'
 
-import { type ReactNode } from "react";
-import { NextAbstractWalletProvider } from "@/components/agw-provider";
-import { NetworkProvider } from "@/lib/network-context";
+const queryClient = new QueryClient()
 
-interface ProvidersProps {
-  children: ReactNode;
-}
-
-export function Providers({ children }: ProvidersProps) {
+export default function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <NextAbstractWalletProvider>
-      <NetworkProvider>
+    <WagmiProvider config={config}>
+      <QueryClientProvider client={queryClient}>
         {children}
-      </NetworkProvider>
-    </NextAbstractWalletProvider>
-  );
+      </QueryClientProvider>
+    </WagmiProvider>
+  )
 }
-
