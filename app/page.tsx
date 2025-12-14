@@ -89,17 +89,17 @@ export default function Home() {
           <h2 style={{textAlign:'center',color:'var(--accent)',marginBottom:'16px'}}>Current Base Fee</h2>
           <div className="value">0.423 gwei</div>
 
-          <div className="mt-8">
+          <div className="mt-8 text-center">
             {!isConnected ? (
-              <button onClick={() => connectors[0] && connect({ connector: connectors[0] })} className="w-full">
+              <button onClick={() => connectors[0] && connect({ connector: connectors[0] })} className="w-full max-w-xs mx-auto">
                 CONNECT WALLET
               </button>
             ) : (
-              <div className="bg-white/10 backdrop-blur rounded-xl p-4 text-center max-w-xs mx-auto border border-white/20">
-                <p className="text-sm opacity-80">Wallet Connected</p>
-                <p className="font-mono text-xs break-all mt-1">{address}</p>
+              <div className="inline-block">
+                <p className="text-xs opacity-80">Wallet Connected</p>
+                <p className="font-mono text-xs break-all">{address}</p>
                 <p className="text-lg font-bold mt-2">${usdcBalance} USDC</p>
-                <button onClick={() => disconnect()} className="w-full mt-4 red text-sm py-2">
+                <button onClick={() => disconnect()} className="w-full mt-4 red text-xs py-2">
                   Disconnect
                 </button>
               </div>
