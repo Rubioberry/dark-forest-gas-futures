@@ -41,7 +41,6 @@ export default function Home() {
 
   useEffect(() => setMounted(true), [])
 
-  // Fixed USDC balance using direct contract read (wagmi v2 way)
   const { data: usdcRawBalance } = useReadContract({
     address: USDC,
     abi: USDC_ABI,
@@ -90,21 +89,22 @@ export default function Home() {
           <h2 style={{textAlign:'center',color:'var(--accent)',marginBottom:'16px'}}>Current Base Fee</h2>
           <div className="value">0.423 gwei</div>
 
-          {!isConnected ? (
-            <button onClick={() => connectors[0] && connect({ connector: connectors[0] })} className="w-full mt-8">
-              CONNECT WALLET
-            </button>
-          ) : (
-            <>
-              <div style={{textAlign:'center',marginTop:'12px'}}>Wallet: {address?.slice(0,6)}…{address?.slice(-4)}</div>
-              <div className="text-center text-2xl mt-4">
-                Balance: ${usdcBalance} USDC
-              </div>
-              <button onClick={() => disconnect()} className="w-full mt-8 red">
-                DISCONNECT
+          <div className="mt-8">
+            {!isConnected ? (
+              <button onClick={() => connectors[0] && connect({ connector: connectors[0] })} className="w-full">
+                CONNECT WALLET
               </button>
-            </>
-          )}
+            ) : (
+              <div className="bg-white/10 backdrop-blur rounded-xl p-4 text-center max-w-xs mx-auto border border-white/20">
+                <p className="text-sm opacity-80">Wallet Connected</p>
+                <p className="font-mono text-xs break-all mt-1">{address}</p>
+                <p className="text-lg font-bold mt-2">${usdcBalance} USDC</p>
+                <button onClick={() => disconnect()} className="w-full mt-4 red text-sm py-2">
+                  Disconnect
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="text-center my-12">
