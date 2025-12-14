@@ -10,6 +10,11 @@ import {
   useWaitForTransactionReceipt
 } from 'wagmi'
 import { formatUnits, parseUnits } from 'viem'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 
 const CONTRACT = '0x7aB017737801C536De8f3914b8BcB62B4B3c2ac0'
 const USDC = '0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8'
@@ -41,7 +46,6 @@ export default function Home() {
 
   useEffect(() => setMounted(true), [])
 
-  // Correct USDC balance using direct contract read (wagmi v2+ way)
   const { data: usdcRawBalance } = useReadContract({
     address: USDC,
     abi: USDC_ABI,
@@ -80,40 +84,38 @@ export default function Home() {
   if (!mounted) return null
 
   return (
-    <div className="min-h-screen text-white relative overflow-x-hidden">
+    <div className="min-h-screen bg-black text-white">
       <div className="overlay" />
-      <div className="simple-header">Dark Forest Gas Futures</div>
-
-      <div className="container">
-
-        <div className="card">
-          <h2 style={{textAlign:'center',color:'var(--accent)',marginBottom:'16px'}}>Current Base Fee</h2>
-          <div className="value">0.423 gwei</div>
-
-          {!isConnected ? (
-            <button onClick={() => connectors[0] && connect({ connector: connectors[0] })} className="w-full mt-8">
-              CONNECT WALLET
-            </button>
-          ) : (
-            <>
-              <div style={{textAlign:'center',marginTop:'12px'}}>Wallet: {address?.slice(0,6)}…{address?.slice(-4)}</div>
-              <div className="text-center text-2xl mt-4">
-                Balance: ${usdcBalance} USDC
+      <header className="border-b border-white/10">
+        <div className="container mx-auto px-6 py-8 flex justify-between items-center">
+          <h1 className="text-4xl font-bold text-green-400">Dark Forest Gas Futures</h1>
+          <div className="text-right">
+            {!isConnected ? (
+              <Button onClick={() => connectors[0] && connect({ connector: connectors[0] })}>
+                Connect Wallet
+              </Button>
+            ) : (
+              <div className="space-y-2">
+                <p className="text-sm opacity-80">Wallet Connected</p>
+                <p className="font-mono">{address?.slice(0,8)}...{address?.slice(-6)}</p>
+                <p className="text-lg font-bold">${usdcBalance} USDC</p>
+                <Button variant="destructive" onClick={() => disconnect()}>
+                  Disconnect
+                </Button>
               </div>
-              <button onClick={() => disconnect()} className="w-full mt-8 red">
-                DISCONNECT
-              </button>
-            </>
-          )}
+            )}
+          </div>
+        </div>
+      </header>
+
+      <main className="container mx-auto px-6 py-12">
+        <div className="text-center mb-12">
+          <Button size="lg" onClick={() => setShowCreate(true)}>
+            + Create Market
+          </Button>
         </div>
 
-        <div className="text-center my-12">
-          <button onClick={() => setShowCreate(true)} className="text-4xl px-20 py-10 rounded-2xl">
-            + CREATE MARKET
-          </button>
-        </div>
-
-        <div className="space-y-8">
+        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
           {markets
             .filter(m => Date.now()/1000 < Number(m.expiry))
             .map(m => {
@@ -125,39 +127,52 @@ export default function Home() {
               const userShort = Number(formatUnits(m.userShort || 0n, 6))
 
               return (
-                <div key={m.id} className="market-row">
-                  {(userLong > 0 || userShort > 0) && <div className="your-badge">YOU BET</div>}
-                  <div>
-                    <strong>Market #{m.id}</strong><br/>
-                    Target: {target.toFixed(4)} gwei<br/>
-                    Time left: {daysLeft}d {hoursLeft}h
-                    {(userLong > 0 || userShort > 0) && <><br/><small>You: {userLong > 0 ? `LONG $${userLong}` : `SHORT $${userShort}`}</small></>}
-                  </div>
-                  <div className="market-buttons">
-                    <button onClick={() => placeBet(m.id, true)}>LONG</button>
-                    <button className="red" onClick={() => placeBet(m.id, false)}>SHORT</button>
-                  </div>
-                </div>
+                <Card key={m.id} className="border-green-400/50 bg-white/5">
+                  <CardHeader>
+                    <CardTitle>Market #{m.id}</CardTitle>
+                    <CardDescription>Target: {target.toFixed(4)} gwei</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <p>Time left: {daysLeft}d {hoursLeft}h</p>
+                    {(userLong > 0 || userShort > 0) && (
+                      <p className="text-sm">
+                        Your position: {userLong > 0 ? `LONG $${userLong}` : `SHORT $${userShort}`}
+                      </p>
+                    )}
+                    <div className="grid grid-cols-2 gap-4">
+                      <Button onClick={() => placeBet(m.id, true)}>LONG</Button>
+                      <Button variant="destructive" onClick={() => placeBet(m.id, false)}>SHORT</Button>
+                    </div>
+                  </CardContent>
+                </Card>
               )
             })}
         </div>
+      </main>
 
-        {showCreate && (
-          <div className="modal active">
-            <div className="modal-content">
-              <span style={{position:'absolute',top:'10px',right:'16px',fontSize:'32px',color:'#666',cursor:'pointer'}} onClick={() => setShowCreate(false)}>×</span>
-              <h3 style={{color:'var(--accent)',textAlign:'center'}}>CREATE MARKET</h3>
-              <p style={{textAlign:'center'}}>Target Base Fee (gwei)</p>
-              <input type="number" placeholder="0.5" step="0.001" value={targetGwei} onChange={e => setTargetGwei(e.target.value)} className="w-full mb-6" />
-              <p style={{textAlign:'center',marginTop:'20px'}}>Days until expiry</p>
-              <input type="number" value={days} onChange={e => setDays(e.target.value)} className="w-full mb-12" />
-              <button onClick={createMarket} className="w-full py-8 text-4xl">
-                CREATE MARKET
-              </button>
+      <Dialog open={showCreate} onOpenChange={setShowCreate}>
+        <DialogContent className="bg-gray-900 text-white border-green-400/50">
+          <DialogHeader>
+            <DialogTitle>Create Market</DialogTitle>
+            <DialogDescription>
+              Set the target base fee and expiry for a new market
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="target">Target Base Fee (gwei)</Label>
+              <Input id="target" type="number" placeholder="0.5" step="0.001" value={targetGwei} onChange={e => setTargetGwei(e.target.value)} className="bg-white/10 border-white/20 text-white" />
             </div>
+            <div>
+              <Label htmlFor="days">Days until expiry</Label>
+              <Input id="days" type="number" value={days} onChange={e => setDays(e.target.value)} className="bg-white/10 border-white/20 text-white" />
+            </div>
+            <Button onClick={createMarket} className="w-full">
+              Create Market
+            </Button>
           </div>
-        )}
-      </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
