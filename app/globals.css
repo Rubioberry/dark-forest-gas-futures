@@ -61,12 +61,13 @@
     background-position: 200%;
     }
   }
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px)
 }
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
@@ -106,6 +107,8 @@
   --color-3: oklch(69.6% 0.165 251);
   --color-4: oklch(80.2% 0.134 225);
   --color-5: oklch(90.7% 0.231 133);
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
 }
 
 .dark {
@@ -169,4 +172,13 @@
 .prose ul + ol,
 .prose li > ol {
   margin-left: 1.5rem;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
 }
