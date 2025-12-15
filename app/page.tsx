@@ -7,27 +7,104 @@ import {
   useDisconnect,
   useReadContract, 
   useWriteContract,
-  useWaitForTransactionReceipt
+  useWaitForTransactionReceipt,
+  usePublicClient
 } from 'wagmi'
 import { formatUnits, parseUnits } from 'viem'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 
-const CONTRACT = '0xcf3Daf692ed603B1a08Ae50C6447D7e9E296Be0E' // ← NEW DEPLOYED CONTRACT
+const CONTRACT = '0xcf3Daf692ed603B1a08Ae50C6447D7e9E296Be0E'
 const USDC = '0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8'
 
 const USDC_ABI = [
-  "function balanceOf(address owner) view returns (uint256)"
+  {
+    "inputs": [{ "internalType": "address", "name": "owner", "type": "address" }],
+    "name": "balanceOf",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  }
 ] as const
 
 const ABI = [
-  "function getMarketCount() view returns (uint256)",
-  "function markets(uint256) view returns (uint256 targetBaseFee, uint256 expiry, uint256 totalLong, uint256 totalShort, bool resolved, bool outcome)",
-  "function longBalance(uint256,address) view returns (uint256)",
-  "function shortBalance(uint256,address) view returns (uint256)",
-  "function betLong(uint256 marketId, uint256 amount)",
-  "function betShort(uint256 marketId, uint256 amount)",
-  "function createMarket(uint256 targetBaseFeeWei, uint256 daysUntilExpiry)",
-  "function redeem(uint256 marketId)"
+  {
+    "inputs": [],
+    "name": "getMarketCount",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "name": "markets",
+    "outputs": [
+      { "internalType": "uint256", "name": "targetBaseFee", "type": "uint256" },
+      { "internalType": "uint256", "name": "expiry", "type": "uint256" },
+      { "internalType": "uint256", "name": "totalLong", "type": "uint256" },
+      { "internalType": "uint256", "name": "totalShort", "type": "uint256" },
+      { "internalType": "bool", "name": "resolved", "type": "bool" },
+      { "internalType": "bool", "name": "outcome", "type": "bool" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "", "type": "uint256" },
+      { "internalType": "address", "name": "", "type": "address" }
+    ],
+    "name": "longBalance",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "", "type": "uint256" },
+      { "internalType": "address", "name": "", "type": "address" }
+    ],
+    "name": "shortBalance",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "marketId", "type": "uint256" },
+      { "internalType": "uint256", "name": "amount", "type": "uint256" }
+    ],
+    "name": "betLong",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "marketId", "type": "uint256" },
+      { "internalType": "uint256", "name": "amount", "type": "uint256" }
+    ],
+    "name": "betShort",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "targetBaseFeeWei", "type": "uint256" },
+      { "internalType": "uint256", "name": "daysUntilExpiry", "type": "uint256" }
+    ],
+    "name": "createMarket",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "uint256", "name": "marketId", "type": "uint256" }],
+    "name": "redeem",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
 ] as const
 
 export default function Home() {
@@ -38,9 +115,13 @@ export default function Home() {
   const [targetGwei, setTargetGwei] = useState('0.5')
   const [days, setDays] = useState('7')
   const [betAmount, setBetAmount] = useState('10')
+  const [markets, setMarkets] = useState<any[]>([])
+  const [refreshKey, setRefreshKey] = useState(0)
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => setMounted(true), [])
+
+  const publicClient = usePublicClient()
 
   const { data: usdcRawBalance } = useReadContract({
     address: USDC,
@@ -51,22 +132,65 @@ export default function Home() {
   })
   const usdcBalance = usdcRawBalance ? Number(formatUnits(usdcRawBalance, 6)).toFixed(2) : '0.00'
 
-  const { data: marketCount } = useReadContract({ address: CONTRACT, abi: ABI, functionName: 'getMarketCount' })
+  const { data: marketCount } = useReadContract({
+    address: CONTRACT,
+    abi: ABI,
+    functionName: 'getMarketCount',
+    watch: true
+  })
 
-  const markets: any[] = []
-  if (mounted && marketCount) {
-    for (let i = 0; i < Number(marketCount); i++) {
-      const { data: m } = useReadContract({ address: CONTRACT, abi: ABI, functionName: 'markets', args: [BigInt(i)] })
-      if (m) {
-        const { data: longBal } = useReadContract({ address: CONTRACT, abi: ABI, functionName: 'longBalance', args: [BigInt(i), address || '0x0'] })
-        const { data: shortBal } = useReadContract({ address: CONTRACT, abi: ABI, functionName: 'shortBalance', args: [BigInt(i), address || '0x0'] })
-        markets.push({ id: i, ...m, userLong: longBal || 0n, userShort: shortBal || 0n })
+  // Fetch all markets
+  useEffect(() => {
+    if (!mounted || !marketCount || !publicClient) return
+
+    const fetchMarkets = async () => {
+      const newMarkets = []
+      for (let i = 0; i < Number(marketCount); i++) {
+        const m = await publicClient.readContract({
+          address: CONTRACT,
+          abi: ABI,
+          functionName: 'markets',
+          args: [BigInt(i)]
+        }) as any
+
+        if (m) {
+          let userLong = 0n
+          let userShort = 0n
+          if (address) {
+            userLong = await publicClient.readContract({
+              address: CONTRACT,
+              abi: ABI,
+              functionName: 'longBalance',
+              args: [BigInt(i), address]
+            }) as bigint
+
+            userShort = await publicClient.readContract({
+              address: CONTRACT,
+              abi: ABI,
+              functionName: 'shortBalance',
+              args: [BigInt(i), address]
+            }) as bigint
+          }
+
+          newMarkets.push({ id: i, ...m, userLong, userShort })
+        }
       }
+      setMarkets(newMarkets)
     }
-  }
+
+    fetchMarkets()
+  }, [marketCount, address, mounted, publicClient, refreshKey])
 
   const { writeContract, data: hash } = useWriteContract()
-  const { isLoading: confirming } = useWaitForTransactionReceipt({ hash })
+  const { isLoading: confirming, isSuccess: txSuccess } = useWaitForTransactionReceipt({ hash })
+
+  // Auto-refresh after successful creation
+  useEffect(() => {
+    if (txSuccess) {
+      setRefreshKey(prev => prev + 1)
+      setShowCreate(false)
+    }
+  }, [txSuccess])
 
   const createMarket = () => {
     if (!targetGwei || Number(targetGwei) <= 0) {
@@ -82,7 +206,7 @@ export default function Home() {
     writeContract({ address: CONTRACT, abi: ABI, functionName: isLong ? 'betLong' : 'betShort', args: [BigInt(id), amount] })
   }
 
-  // Weekly predictive data (real 2025 mainnet pattern — ultra-low fees)
+  // Weekly predictive data (2025 mainnet pattern)
   const weeklyData = [
     { day: 'Mon', gwei: 0.12 },
     { day: 'Tue', gwei: 0.15 },
@@ -93,14 +217,6 @@ export default function Home() {
     { day: 'Sun', gwei: 0.06 }
   ]
 
-  // Auto-refresh every 30 seconds
-  useEffect(() => {
-    const interval = setInterval(() => {
-      console.log('Markets refreshed')
-    }, 30000)
-    return () => clearInterval(interval)
-  }, [])
-
   if (!mounted) return null
 
   const now = Date.now() / 1000
@@ -109,6 +225,21 @@ export default function Home() {
     <div className="min-h-screen text-white relative overflow-x-hidden">
       <div className="overlay" />
       <div className="simple-header">Dark Forest Gas Futures</div>
+
+      {/* Contract & USDC Notice */}
+      <div className="card my-8 text-center text-sm">
+        <p>
+          <strong>Smart Contract:</strong>{' '}
+          <a href="https://sepolia.etherscan.io/address/0xcf3Daf692ed603B1a08Ae50C6447D7e9E296Be0E" target="_blank" className="text-green-400 underline">
+            0xcf3D...Be0E
+          </a>
+        </p>
+        <p className="mt-2">
+          <strong>Using official Circle Sepolia USDC</strong><br/>
+          Token: <a href="https://sepolia.etherscan.io/address/0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8" target="_blank" className="text-green-400 underline">0x94a9...E4C8</a><br/>
+          Get test USDC: <a href="https://gho.aave.com/faucet/" target="_blank" className="text-green-400 underline">Aave Sepolia Faucet</a>
+        </p>
+      </div>
 
       <div className="container">
 
@@ -133,7 +264,7 @@ export default function Home() {
           )}
         </div>
 
-        {/* Weekly Predictive Chart */}
+        {/* Weekly Predictive Chart - Fixed height */}
         <div className="card my-12">
           <h2 style={{textAlign:'center',color:'var(--accent)'}}>Weekly Average Base Fee (gwei)</h2>
           <p className="text-center text-sm opacity-80 mb-6">2025 mainnet pattern • Ultra-low fees</p>
@@ -154,36 +285,43 @@ export default function Home() {
           <button onClick={() => setShowCreate(true)} className="text-4xl px-20 py-10 rounded-2xl">
             + CREATE MARKET
           </button>
+          <button onClick={() => setRefreshKey(prev => prev + 1)} className="ml-8 px-8 py-4 text-lg rounded-xl bg-white/10">
+            Refresh Markets
+          </button>
         </div>
 
         <div className="space-y-8">
-          {markets
-            .filter(m => Number(m.expiry) > now)
-            .map(m => {
-              const timeLeft = Number(m.expiry) - now
-              const daysLeft = Math.floor(timeLeft / 86400)
-              const hoursLeft = Math.floor((timeLeft % 86400) / 3600)
-              const target = Number(m.targetBaseFee) / 1e9
-              const userLong = Number(formatUnits(m.userLong || 0n, 6))
-              const userShort = Number(formatUnits(m.userShort || 0n, 6))
+          {markets.length === 0 ? (
+            <p className="text-center text-xl opacity-80">No active markets yet — create one!</p>
+          ) : (
+            markets
+              .filter(m => Number(m.expiry) > now)
+              .map(m => {
+                const timeLeft = Number(m.expiry) - now
+                const daysLeft = Math.floor(timeLeft / 86400)
+                const hoursLeft = Math.floor((timeLeft % 86400) / 3600)
+                const target = Number(m.targetBaseFee) / 1e9
+                const userLong = Number(formatUnits(m.userLong || 0n, 6))
+                const userShort = Number(formatUnits(m.userShort || 0n, 6))
 
-              return (
-                <div key={m.id} className="market-row">
-                  <div className="absolute top-2 left-2 bg-green-600 text-black px-3 py-1 rounded-full text-xs font-bold">OPEN</div>
-                  {(userLong > 0 || userShort > 0) && <div className="your-badge">YOUR BET</div>}
-                  <div>
-                    <strong>Market #{m.id}</strong><br/>
-                    Target: {target.toFixed(4)} gwei<br/>
-                    Time left: {daysLeft}d {hoursLeft}h
-                    {(userLong > 0 || userShort > 0) && <><br/><small>You: {userLong > 0 ? `LONG $${userLong}` : `SHORT $${userShort}`}</small></>}
+                return (
+                  <div key={m.id} className="market-row">
+                    <div className="absolute top-2 left-2 bg-green-600 text-black px-3 py-1 rounded-full text-xs font-bold">OPEN</div>
+                    {(userLong > 0 || userShort > 0) && <div className="your-badge">YOUR BET</div>}
+                    <div>
+                      <strong>Market #{m.id}</strong><br/>
+                      Target: {target.toFixed(4)} gwei<br/>
+                      Time left: {daysLeft}d {hoursLeft}h
+                      {(userLong > 0 || userShort > 0) && <><br/><small>You: {userLong > 0 ? `LONG $${userLong}` : `SHORT $${userShort}`}</small></>}
+                    </div>
+                    <div className="market-buttons">
+                      <button onClick={() => placeBet(m.id, true)}>LONG</button>
+                      <button className="red" onClick={() => placeBet(m.id, false)}>SHORT</button>
+                    </div>
                   </div>
-                  <div className="market-buttons">
-                    <button onClick={() => placeBet(m.id, true)}>LONG</button>
-                    <button className="red" onClick={() => placeBet(m.id, false)}>SHORT</button>
-                  </div>
-                </div>
-              )
-            })}
+                )
+              })
+          )}
         </div>
 
         {showCreate && (
