@@ -116,6 +116,7 @@ export default function Home() {
   const [days, setDays] = useState('7')
   const [betAmount, setBetAmount] = useState('10')
   const [markets, setMarkets] = useState<any[]>([])
+  const [loadingMarkets, setLoadingMarkets] = useState(true)
   const [refreshKey, setRefreshKey] = useState(0)
   const [mounted, setMounted] = useState(false)
 
@@ -140,6 +141,8 @@ export default function Home() {
   // Fetch markets
   useEffect(() => {
     if (!mounted || !marketCount || !publicClient) return
+
+    setLoadingMarkets(true)
 
     const fetchMarkets = async () => {
       const newMarkets = []
@@ -174,6 +177,7 @@ export default function Home() {
         }
       }
       setMarkets(newMarkets)
+      setLoadingMarkets(false)
     }
 
     fetchMarkets()
@@ -223,21 +227,6 @@ export default function Home() {
       <div className="overlay" />
       <div className="simple-header">Dark Forest Gas Futures</div>
 
-      {/* Contract & USDC Notice */}
-      <div className="card my-8 text-center text-sm">
-        <p>
-          <strong>Smart Contract:</strong>{' '}
-          <a href="https://sepolia.etherscan.io/address/0xcf3Daf692ed603B1a08Ae50C6447D7e9E296Be0E" target="_blank" className="text-green-400 underline">
-            0xcf3D...Be0E
-          </a>
-        </p>
-        <p className="mt-2">
-          <strong>Using official Circle Sepolia USDC</strong><br/>
-          Token: <a href="https://sepolia.etherscan.io/address/0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8" target="_blank" className="text-green-400 underline">0x94a9...E4C8</a><br/>
-          Get test USDC: <a href="https://gho.aave.com/faucet/" target="_blank" className="text-green-400 underline">Aave Sepolia Faucet</a>
-        </p>
-      </div>
-
       <div className="container">
 
         <div className="card">
@@ -261,11 +250,11 @@ export default function Home() {
           )}
         </div>
 
-        {/* Weekly Predictive Chart - Fixed with explicit height */}
+        {/* Weekly Predictive Chart */}
         <div className="card my-12">
           <h2 style={{textAlign:'center',color:'var(--accent)'}}>Weekly Average Base Fee (gwei)</h2>
           <p className="text-center text-sm opacity-80 mb-6">2025 mainnet pattern • Ultra-low fees</p>
-          <div className="h-[400px] w-full">
+          <div className="h-96 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={weeklyData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#333" />
@@ -287,9 +276,10 @@ export default function Home() {
           </button>
         </div>
 
-        {/* Markets list - Fixed with min-height */}
-        <div className="space-y-8 min-h-[600px]">
-          {markets.length === 0 ? (
+        <div className="space-y-8 min-h-96">
+          {loadingMarkets ? (
+            <p className="text-center text-xl opacity-80">Loading markets...</p>
+          ) : markets.length === 0 ? (
             <p className="text-center text-xl opacity-80">No active markets yet — create one!</p>
           ) : (
             markets
@@ -303,16 +293,16 @@ export default function Home() {
                 const userShort = Number(formatUnits(m.userShort || 0n, 6))
 
                 return (
-                  <div key={m.id} className="market-row">
+                  <div key={m.id} className="market-row bg-card/80 p-6 rounded-xl shadow-lg">
                     <div className="absolute top-2 left-2 bg-green-600 text-black px-3 py-1 rounded-full text-xs font-bold">OPEN</div>
                     {(userLong > 0 || userShort > 0) && <div className="your-badge">YOUR BET</div>}
-                    <div>
-                      <strong>Market #{m.id}</strong><br/>
+                    <div className="text-left">
+                      <strong className="text-xl">Market #{m.id}</strong><br/>
                       Target: {target.toFixed(4)} gwei<br/>
                       Time left: {daysLeft}d {hoursLeft}h
-                      {(userLong > 0 || userShort > 0) && <><br/><small>You: {userLong > 0 ? `LONG $${userLong}` : `SHORT $${userShort}`}</small></>}
+                      {(userLong > 0 || userShort > 0) && <><br/><small>You: {userLong > 0 ? `LONG $${userLong.toFixed(2)}` : `SHORT $${userShort.toFixed(2)}`}</small></>}
                     </div>
-                    <div className="market-buttons">
+                    <div className="market-buttons mt-4">
                       <button onClick={() => placeBet(m.id, true)}>LONG</button>
                       <button className="red" onClick={() => placeBet(m.id, false)}>SHORT</button>
                     </div>
