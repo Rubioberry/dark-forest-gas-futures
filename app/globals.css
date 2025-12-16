@@ -2,229 +2,25 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --bg: #000;
-  --accent: #00ff9d;
-  --glow: 0 0 40px #00ff9d70;
-  --card: rgba(10,10,10,0.75);
-  --border: #00ff9d50;
-}
+/* Your existing styles (keep them if you have custom ones) */
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  background: #000;
-  color: #e0e0e0;
-  font-family: "Courier New", monospace;
-  min-height: 100vh;
-  position: relative;
-  overflow-x: hidden;
-}
-
-.overlay {
-  position: fixed;
-  inset: 0;
-  background: radial-gradient(circle at center, rgba(0,255,157,0.06), transparent 70%);
-  z-index: -1;
-  pointer-events: none;
-}
-
-.simple-header {
-  text-align: center;
-  padding: 50px 20px 30px;
-  color: var(--accent);
-  font-size: 1.6rem;
+/* Hyperlink styles */
+a {
+  color: white;
   font-weight: bold;
-  text-shadow: var(--glow);
-  letter-spacing: 6px;
-  background: rgba(0,255,157,0.05);
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 20px;
+  text-decoration: none;
+  transition: color 0.3s ease;
 }
 
-.container {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 20px;
-  position: relative;
-  z-index: 10;
+a:hover {
+  color: yellow;
 }
 
-.card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 24px;
-  margin: 20px 0;
-  backdrop-filter: blur(12px);
-  box-shadow: var(--glow);
+a:active {
+  color: black;
 }
 
-.value {
-  font-size: 3.2rem;
-  font-weight: bold;
-  color: var(--accent);
-  text-align: center;
-  text-shadow: var(--glow);
-}
-
-button {
-  background: linear-gradient(135deg, #00ff9d, #00cc7a);
-  color: #000;
-  border: none;
-  padding: 16px 24px;
-  font-size: 1.2rem;
-  font-weight: bold;
-  border-radius: 12px;
-  width: 100%;
-  cursor: pointer;
-  min-height: 60px;
-  margin: 10px 0;
-  box-shadow: var(--glow);
-  transition: 0.3s;
-}
-
-button:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 40px #00ff9d90;
-}
-
-button.red {
-  background: linear-gradient(135deg, #ff4757, #ff3838);
-  box-shadow: 0 0 30px #ff475760;
-}
-
-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  background: #444;
-}
-
-.grid {
-  display: grid;
-  gap: 20px;
-  grid-template-columns: 1fr;
-}
-
-@media (min-width: 640px) {
-  .grid {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-@media (min-width: 1024px) {
-  .grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-.chart-wrapper {
-  position: relative;
-  height: 300px;
-  margin: 20px 0;
-  border-radius: 12px;
-  overflow: hidden;
-  background: #000;
-  border: 1px solid var(--border);
-}
-
-.market-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 18px;
-  border-bottom: 1px solid var(--border);
-  gap: 12px;
-  flex-wrap: wrap;
-  background: rgba(155,89,182,0.05);
-  border-radius: 8px;
-  margin: 8px 0;
-  position: relative;
-}
-
-.market-row.your-bet {
-  border: 2px solid var(--accent);
-  box-shadow: 0 0 20px #00ff9d50;
-}
-
-.your-badge {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  background: var(--accent);
-  color: #000;
-  font-size: 0.7rem;
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-weight: bold;
-}
-
-.market-buttons {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.market-buttons button {
-  width: auto;
-  padding: 12px 24px;
-  font-size: 1.1rem;
-  min-height: 50px;
-}
-
-.modal {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.96);
-  justify-content: center;
-  align-items: center;
-  z-index: 999;
-}
-
-.modal.active {
-  display: flex;
-}
-
-.modal-content {
-  background: var(--card);
-  border: 2px solid var(--accent);
-  border-radius: 20px;
-  padding: 32px;
-  width: 90%;
-  max-width: 460px;
-  box-shadow: 0 0 60px var(--glow);
-  backdrop-filter: blur(16px);
-}
-
-input[type=number] {
-  background: #111;
-  border: 1px solid var(--border);
-  color: #fff;
-  padding: 16px;
-  font-size: 1.4rem;
-  text-align: center;
-  border-radius: 12px;
-  width: 100%;
-  margin: 16px 0;
-}
-
-.usdc-notice {
-  background: rgba(0,255,157,0.1);
-  border: 1px solid var(--accent);
-  border-radius: 12px;
-  padding: 16px;
-  margin: 20px 0;
-  text-align: center;
-  font-size: 0.95rem;
-  line-height: 1.5;
-}
-
-.usdc-notice a {
-  color: #00ff9d;
-  text-decoration: underline;
+/* Optional: Visited links stay white */
+a:visited {
+  color: white;
 }
