@@ -189,3 +189,23 @@ input[type=number] {
   width: 100%;
   margin: 16px 0;
 }
+
+/* Hyperlink styles - white bold, yellow hover, black active */
+a {
+  color: white;
+  font-weight: bold;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+a:hover {
+  color: yellow;
+}
+
+a:active {
+  color: black;
+}
+
+a:visited {
+  color: white;
+}
