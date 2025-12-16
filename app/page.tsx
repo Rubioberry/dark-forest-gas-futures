@@ -116,6 +116,7 @@ export default function Home() {
   const [days, setDays] = useState('7')
   const [betAmount, setBetAmount] = useState('10')
   const [markets, setMarkets] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
   const [refreshKey, setRefreshKey] = useState(0)
   const [mounted, setMounted] = useState(false)
 
@@ -140,6 +141,8 @@ export default function Home() {
   // Fetch markets
   useEffect(() => {
     if (!mounted || !marketCount || !publicClient) return
+
+    setLoading(true)
 
     const fetchMarkets = async () => {
       const newMarkets = []
@@ -174,6 +177,7 @@ export default function Home() {
         }
       }
       setMarkets(newMarkets)
+      setLoading(false)
     }
 
     fetchMarkets()
@@ -261,7 +265,7 @@ export default function Home() {
           )}
         </div>
 
-        {/* Weekly Predictive Chart - Explicit pixel height */}
+        {/* Weekly Predictive Chart */}
         <div className="card my-12">
           <h2 style={{textAlign:'center',color:'var(--accent)'}}>Weekly Average Base Fee (gwei)</h2>
           <p className="text-center text-sm opacity-80 mb-6">2025 mainnet pattern • Ultra-low fees</p>
@@ -287,10 +291,12 @@ export default function Home() {
           </button>
         </div>
 
-        {/* Markets list - Explicit min-height */}
+        {/* Markets list - Fixed with min-h-[600px] */}
         <div className="space-y-8 min-h-[600px]">
-          {markets.length === 0 ? (
-            <p className="text-center text-xl opacity-80">No active markets yet — create one!</p>
+          {loading ? (
+            <p className="text-center text-2xl opacity-80 mt-32">Loading markets...</p>
+          ) : markets.length === 0 ? (
+            <p className="text-center text-2xl opacity-80 mt-32">No active markets yet — create one!</p>
           ) : (
             markets
               .filter(m => Number(m.expiry) > now)
