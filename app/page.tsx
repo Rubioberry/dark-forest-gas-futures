@@ -127,19 +127,17 @@ export default function Home() {
     address: USDC,
     abi: USDC_ABI,
     functionName: 'balanceOf',
-    args: address ? [address] : undefined,
-    watch: true
+    args: address ? [address] : undefined
   })
   const usdcBalance = usdcRawBalance ? Number(formatUnits(usdcRawBalance, 6)).toFixed(2) : '0.00'
 
   const { data: marketCount } = useReadContract({
     address: CONTRACT,
     abi: ABI,
-    functionName: 'getMarketCount',
-    watch: true
+    functionName: 'getMarketCount'
   })
 
-  // Fetch all markets
+  // Fetch markets when marketCount or refreshKey changes
   useEffect(() => {
     if (!mounted || !marketCount || !publicClient) return
 
@@ -264,7 +262,7 @@ export default function Home() {
           )}
         </div>
 
-        {/* Weekly Predictive Chart - Fixed height */}
+        {/* Weekly Predictive Chart */}
         <div className="card my-12">
           <h2 style={{textAlign:'center',color:'var(--accent)'}}>Weekly Average Base Fee (gwei)</h2>
           <p className="text-center text-sm opacity-80 mb-6">2025 mainnet pattern • Ultra-low fees</p>
