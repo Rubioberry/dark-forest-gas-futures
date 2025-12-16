@@ -261,7 +261,7 @@ export default function Home() {
           )}
         </div>
 
-        {/* Weekly Predictive Chart */}
+        {/* Weekly Predictive Chart - Fixed height */}
         <div className="card my-12">
           <h2 style={{textAlign:'center',color:'var(--accent)'}}>Weekly Average Base Fee (gwei)</h2>
           <p className="text-center text-sm opacity-80 mb-6">2025 mainnet pattern • Ultra-low fees</p>
@@ -287,7 +287,7 @@ export default function Home() {
           </button>
         </div>
 
-        {/* Markets list - Fixed with min-h-96 to prevent collapse */}
+        {/* Markets list - Fixed with min-h-96 */}
         <div className="space-y-8 min-h-96">
           {markets.length === 0 ? (
             <p className="text-center text-xl opacity-80">No active markets yet — create one!</p>
