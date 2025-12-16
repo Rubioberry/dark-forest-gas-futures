@@ -261,11 +261,11 @@ export default function Home() {
           )}
         </div>
 
-        {/* Weekly Predictive Chart - Fixed height */}
+        {/* Weekly Predictive Chart - Fixed with explicit height */}
         <div className="card my-12">
           <h2 style={{textAlign:'center',color:'var(--accent)'}}>Weekly Average Base Fee (gwei)</h2>
           <p className="text-center text-sm opacity-80 mb-6">2025 mainnet pattern • Ultra-low fees</p>
-          <div className="h-96 w-full">
+          <div className="h-[400px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={weeklyData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#333" />
@@ -287,8 +287,8 @@ export default function Home() {
           </button>
         </div>
 
-        {/* Markets list - Fixed with min-h-96 */}
-        <div className="space-y-8 min-h-96">
+        {/* Markets list - Fixed with min-height */}
+        <div className="space-y-8 min-h-[600px]">
           {markets.length === 0 ? (
             <p className="text-center text-xl opacity-80">No active markets yet — create one!</p>
           ) : (
