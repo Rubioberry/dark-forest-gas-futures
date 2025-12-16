@@ -117,6 +117,7 @@ export default function Home() {
   const [betAmount, setBetAmount] = useState('10')
   const [markets, setMarkets] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
   const [refreshKey, setRefreshKey] = useState(0)
   const [mounted, setMounted] = useState(false)
 
@@ -138,46 +139,57 @@ export default function Home() {
     functionName: 'getMarketCount'
   })
 
-  // Fetch markets
+  // Fetch markets with error handling
   useEffect(() => {
     if (!mounted || !marketCount || !publicClient) return
 
     setLoading(true)
+    setError('')
 
     const fetchMarkets = async () => {
-      const newMarkets = []
-      for (let i = 0; i < Number(marketCount); i++) {
-        const m = await publicClient.readContract({
-          address: CONTRACT,
-          abi: ABI,
-          functionName: 'markets',
-          args: [BigInt(i)]
-        }) as any
+      try {
+        const newMarkets = []
+        for (let i = 0; i < Number(marketCount); i++) {
+          const m = await publicClient.readContract({
+            address: CONTRACT,
+            abi: ABI,
+            functionName: 'markets',
+            args: [BigInt(i)]
+          }) as any
 
-        if (m) {
-          let userLong = 0n
-          let userShort = 0n
-          if (address) {
-            userLong = await publicClient.readContract({
-              address: CONTRACT,
-              abi: ABI,
-              functionName: 'longBalance',
-              args: [BigInt(i), address]
-            }) as bigint
+          if (m) {
+            let userLong = 0n
+            let userShort = 0n
+            if (address) {
+              try {
+                userLong = await publicClient.readContract({
+                  address: CONTRACT,
+                  abi: ABI,
+                  functionName: 'longBalance',
+                  args: [BigInt(i), address]
+                }) as bigint
+              } catch {}
 
-            userShort = await publicClient.readContract({
-              address: CONTRACT,
-              abi: ABI,
-              functionName: 'shortBalance',
-              args: [BigInt(i), address]
-            }) as bigint
+              try {
+                userShort = await publicClient.readContract({
+                  address: CONTRACT,
+                  abi: ABI,
+                  functionName: 'shortBalance',
+                  args: [BigInt(i), address]
+                }) as bigint
+              } catch {}
+            }
+
+            newMarkets.push({ id: i, ...m, userLong, userShort })
           }
-
-          newMarkets.push({ id: i, ...m, userLong, userShort })
         }
+        setMarkets(newMarkets)
+      } catch (e) {
+        console.error(e)
+        setError('Failed to load markets — click Refresh')
+      } finally {
+        setLoading(false)
       }
-      setMarkets(newMarkets)
-      setLoading(false)
     }
 
     fetchMarkets()
@@ -291,10 +303,12 @@ export default function Home() {
           </button>
         </div>
 
-        {/* Markets list - Fixed with min-h-[600px] */}
+        {/* Markets list */}
         <div className="space-y-8 min-h-[600px]">
           {loading ? (
             <p className="text-center text-2xl opacity-80 mt-32">Loading markets...</p>
+          ) : error ? (
+            <p className="text-center text-2xl text-red-400 mt-32">{error}<br/><button onClick={() => setRefreshKey(prev => prev + 1)} className="mt-4 px-6 py-3 bg-white/10 rounded">Try Refresh</button></p>
           ) : markets.length === 0 ? (
             <p className="text-center text-2xl opacity-80 mt-32">No active markets yet — create one!</p>
           ) : (
