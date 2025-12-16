@@ -137,7 +137,7 @@ export default function Home() {
     functionName: 'getMarketCount'
   })
 
-  // Fetch markets when marketCount or refreshKey changes
+  // Fetch markets
   useEffect(() => {
     if (!mounted || !marketCount || !publicClient) return
 
@@ -182,7 +182,6 @@ export default function Home() {
   const { writeContract, data: hash } = useWriteContract()
   const { isLoading: confirming, isSuccess: txSuccess } = useWaitForTransactionReceipt({ hash })
 
-  // Auto-refresh after successful creation
   useEffect(() => {
     if (txSuccess) {
       setRefreshKey(prev => prev + 1)
@@ -224,21 +223,6 @@ export default function Home() {
       <div className="overlay" />
       <div className="simple-header">Dark Forest Gas Futures</div>
 
-      {/* Contract & USDC Notice */}
-      <div className="card my-8 text-center text-sm">
-        <p>
-          <strong>Smart Contract:</strong>{' '}
-          <a href="https://sepolia.etherscan.io/address/0xcf3Daf692ed603B1a08Ae50C6447D7e9E296Be0E" target="_blank" className="text-green-400 underline">
-            0xcf3D...Be0E
-          </a>
-        </p>
-        <p className="mt-2">
-          <strong>Using official Circle Sepolia USDC</strong><br/>
-          Token: <a href="https://sepolia.etherscan.io/address/0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8" target="_blank" className="text-green-400 underline">0x94a9...E4C8</a><br/>
-          Get test USDC: <a href="https://gho.aave.com/faucet/" target="_blank" className="text-green-400 underline">Aave Sepolia Faucet</a>
-        </p>
-      </div>
-
       <div className="container">
 
         <div className="card">
@@ -262,7 +246,7 @@ export default function Home() {
           )}
         </div>
 
-        {/* Weekly Predictive Chart */}
+        {/* Weekly Predictive Chart - Fixed with h-96 */}
         <div className="card my-12">
           <h2 style={{textAlign:'center',color:'var(--accent)'}}>Weekly Average Base Fee (gwei)</h2>
           <p className="text-center text-sm opacity-80 mb-6">2025 mainnet pattern • Ultra-low fees</p>
@@ -288,7 +272,7 @@ export default function Home() {
           </button>
         </div>
 
-        <div className="space-y-8">
+        <div className="space-y-8 min-h-96">
           {markets.length === 0 ? (
             <p className="text-center text-xl opacity-80">No active markets yet — create one!</p>
           ) : (
